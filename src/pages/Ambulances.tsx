@@ -45,7 +45,7 @@ const Ambulances = () => {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Ambulance className="h-5 w-5 text-primary" />
-            Vehicle Details
+            Ambulance Details
           </CardTitle>
         </CardHeader>
         <CardContent>
