@@ -18,10 +18,8 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarFooter,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
 const navItems = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
@@ -77,18 +75,22 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        <div className="mt-auto border-t border-sidebar-border p-2">
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild>
+                <button
+                  onClick={handleLogout}
+                  className="flex w-full items-center gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <LogOut className="h-4 w-4 flex-shrink-0" />
+                  {!collapsed && <span>Logout</span>}
+                </button>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
+        </div>
       </SidebarContent>
-
-      <SidebarFooter className="border-t border-sidebar-border p-2">
-        <Button
-          variant="ghost"
-          className="w-full justify-start gap-2 text-destructive hover:bg-destructive/10 hover:text-destructive"
-          onClick={handleLogout}
-        >
-          <LogOut className="h-4 w-4 flex-shrink-0" />
-          {!collapsed && <span>Logout</span>}
-        </Button>
-      </SidebarFooter>
     </Sidebar>
   );
 }
