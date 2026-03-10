@@ -54,7 +54,7 @@ const Hospitals = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="page-header">Add New Hospital</h1>
+      <h1 className="page-header text-center">Add New Hospital Register</h1>
 
       <Tabs defaultValue="with-nicu" className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">

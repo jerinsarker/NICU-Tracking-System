@@ -45,7 +45,7 @@ const Ambulances = () => {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Ambulance className="h-5 w-5 text-primary" />
-            Vehicle Details
+            Ambulance Details
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -145,22 +145,29 @@ const Ambulances = () => {
 
             <div className="space-y-3">
               <Label>Service Area (Catchment)</Label>
-              <div className="flex flex-wrap gap-2">
-                {catchmentAreas.map((area) => (
-                  <button
-                    type="button"
-                    key={area}
-                    onClick={() => toggleArea(area)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium border transition-colors ${
-                      selectedAreas.includes(area)
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card text-foreground border-border hover:border-primary/40"
-                    }`}
-                  >
-                    {area}
-                  </button>
-                ))}
-              </div>
+              <Select onValueChange={(val) => setSelectedAreas((prev) => prev.includes(val) ? prev : [...prev, val])}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select catchment area" />
+                </SelectTrigger>
+                <SelectContent>
+                  {catchmentAreas.map((area) => (
+                    <SelectItem key={area} value={area}>{area}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {selectedAreas.length > 0 && (
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedAreas.map((area) => (
+                    <span
+                      key={area}
+                      className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium bg-primary text-primary-foreground cursor-pointer"
+                      onClick={() => setSelectedAreas((prev) => prev.filter((a) => a !== area))}
+                    >
+                      {area} ×
+                    </span>
+                  ))}
+                </div>
+              )}
             </div>
 
             <Button type="submit" className="w-full gap-2">
