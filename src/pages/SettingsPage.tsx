@@ -52,7 +52,6 @@ interface SystemUser {
   email: string;
   phone: string;
   role: string;
-  affiliation: string;
   status: "Active" | "Suspended";
 }
 
@@ -99,7 +98,7 @@ const initialRoles: Role[] = [
   },
   {
     id: "r2",
-    name: "Hospital Manager",
+    name: "Hospital",
     color: "bg-blue-100 text-blue-800 border-blue-300",
     permissions: Object.fromEntries(
       systemModules.map((m) => [
@@ -115,7 +114,7 @@ const initialRoles: Role[] = [
   },
   {
     id: "r3",
-    name: "Data Entry Staff",
+    name: "Consumer",
     color: "bg-emerald-100 text-emerald-800 border-emerald-300",
     permissions: Object.fromEntries(
       systemModules.map((m) => [
@@ -131,7 +130,7 @@ const initialRoles: Role[] = [
   },
   {
     id: "r4",
-    name: "Ambulance Driver",
+    name: "Ambulance",
     color: "bg-purple-100 text-purple-800 border-purple-300",
     permissions: Object.fromEntries(
       systemModules.map((m) => [
@@ -148,18 +147,18 @@ const initialRoles: Role[] = [
 ];
 
 const initialUsers: SystemUser[] = [
-  { id: "u1", name: "Dr. Rahim Uddin", email: "rahim@nicu.gov.bd", phone: "+880-1711-000001", role: "Super Admin", affiliation: "National HQ", status: "Active" },
-  { id: "u2", name: "Fatema Begum", email: "fatema@dhmc.gov.bd", phone: "+880-1711-000002", role: "Hospital Manager", affiliation: "Dhaka Medical College", status: "Active" },
-  { id: "u3", name: "Kamal Hasan", email: "kamal@cmch.gov.bd", phone: "+880-1711-000003", role: "Data Entry Staff", affiliation: "Chittagong Medical College", status: "Active" },
-  { id: "u4", name: "Jahanara Khatun", email: "jahanara@rmch.gov.bd", phone: "+880-1711-000004", role: "Hospital Manager", affiliation: "Rajshahi Medical College", status: "Suspended" },
-  { id: "u5", name: "Mizanur Rahman", email: "mizan@amb.gov.bd", phone: "+880-1711-000005", role: "Ambulance Driver", affiliation: "Central Ambulance Service", status: "Active" },
+  { id: "u1", name: "Dr. Rahim Uddin", email: "rahim@nicu.gov.bd", phone: "+880-1711-000001", role: "Super Admin", status: "Active" },
+  { id: "u2", name: "Dhaka Medical College", email: "fatema@dhmc.gov.bd", phone: "+880-1711-000002", role: "Hospital", status: "Active" },
+  { id: "u3", name: "Kamal Hasan", email: "kamal@cmch.gov.bd", phone: "+880-1711-000003", role: "Consumer", status: "Active" },
+  { id: "u4", name: "Rajshahi Medical College", email: "jahanara@rmch.gov.bd", phone: "+880-1711-000004", role: "Hospital", status: "Suspended" },
+  { id: "u5", name: "Mizanur Rahman", email: "mizan@amb.gov.bd", phone: "+880-1711-000005", role: "Ambulance", status: "Active" },
 ];
 
 const roleColorMap: Record<string, string> = {
   "Super Admin": "bg-amber-100 text-amber-800 border border-amber-300",
-  "Hospital Manager": "bg-blue-100 text-blue-800 border border-blue-300",
-  "Data Entry Staff": "bg-emerald-100 text-emerald-800 border border-emerald-300",
-  "Ambulance Driver": "bg-purple-100 text-purple-800 border border-purple-300",
+  "Hospital": "bg-blue-100 text-blue-800 border border-blue-300",
+  "Consumer": "bg-emerald-100 text-emerald-800 border border-emerald-300",
+  "Ambulance": "bg-purple-100 text-purple-800 border border-purple-300",
 };
 
 // ─── Component ───
@@ -169,7 +168,7 @@ const SettingsPage = () => {
   const [userModal, setUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
-  const [userForm, setUserForm] = useState({ name: "", email: "", phone: "", password: "", role: "", affiliation: "" });
+  const [userForm, setUserForm] = useState({ name: "", email: "", phone: "", password: "", role: "" });
 
   // Tab 2: Role Management
   const [roles, setRoles] = useState<Role[]>(initialRoles);
@@ -189,15 +188,9 @@ const SettingsPage = () => {
   const selectedRole = roles.find((r) => r.id === selectedRoleId);
 
   // ─── User Handlers ───
-  const openAddUser = () => {
-    setEditingUser(null);
-    setUserForm({ name: "", email: "", phone: "", password: "", role: "", affiliation: "" });
-    setUserModal(true);
-  };
-
   const openEditUser = (u: SystemUser) => {
     setEditingUser(u);
-    setUserForm({ name: u.name, email: u.email, phone: u.phone, password: "", role: u.role, affiliation: u.affiliation });
+    setUserForm({ name: u.name, email: u.email, phone: u.phone, password: "", role: u.role });
     setUserModal(true);
   };
 
@@ -209,14 +202,6 @@ const SettingsPage = () => {
     if (editingUser) {
       setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? { ...u, ...userForm, status: u.status } : u)));
       toast.success("User updated successfully!");
-    } else {
-      const newUser: SystemUser = {
-        id: `u${Date.now()}`,
-        ...userForm,
-        status: "Active",
-      };
-      setUsers((prev) => [...prev, newUser]);
-      toast.success("New user added successfully!");
     }
     setUserModal(false);
   };
@@ -318,6 +303,17 @@ const SettingsPage = () => {
 
   const removeDistrict = (d: string) => setDistricts(districts.filter((x) => x !== d));
 
+  // Dynamic label for name field based on selected role
+  const getNameLabel = () => {
+    if (userForm.role === "Hospital") return "Hospital Name";
+    return "Full Name";
+  };
+
+  const getNamePlaceholder = () => {
+    if (userForm.role === "Hospital") return "e.g. Dhaka Medical College";
+    return "e.g. Dr. Rahim Uddin";
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center gap-3">
@@ -346,13 +342,10 @@ const SettingsPage = () => {
         ═══════════════════════════════════════════ */}
         <TabsContent value="users" className="mt-6">
           <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-4">
+            <CardHeader className="pb-4">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" /> User Management
               </CardTitle>
-              <Button onClick={openAddUser} className="gap-1.5">
-                <Plus className="h-4 w-4" /> Add New User
-              </Button>
             </CardHeader>
             <CardContent>
               <div className="rounded-lg border border-border overflow-hidden">
@@ -363,7 +356,6 @@ const SettingsPage = () => {
                         <th className="text-left px-4 py-3 font-semibold text-foreground">Name</th>
                         <th className="text-left px-4 py-3 font-semibold text-foreground">Email</th>
                         <th className="text-left px-4 py-3 font-semibold text-foreground">Role</th>
-                        <th className="text-left px-4 py-3 font-semibold text-foreground">Affiliation</th>
                         <th className="text-center px-4 py-3 font-semibold text-foreground">Status</th>
                         <th className="text-center px-4 py-3 font-semibold text-foreground">Actions</th>
                       </tr>
@@ -378,7 +370,6 @@ const SettingsPage = () => {
                               {u.role}
                             </Badge>
                           </td>
-                          <td className="px-4 py-3 text-muted-foreground">{u.affiliation}</td>
                           <td className="px-4 py-3 text-center">
                             <Badge
                               variant={u.status === "Active" ? "default" : "destructive"}
@@ -605,19 +596,19 @@ const SettingsPage = () => {
           MODALS
       ═══════════════════════════════════════════ */}
 
-      {/* Add / Edit User Modal */}
+      {/* Edit User Modal */}
       <Dialog open={userModal} onOpenChange={setUserModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
+            <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              {editingUser ? "Update this user's information and role." : "Fill in the details for the new user."}
+              Update this user's information and role.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>Full Name</Label>
-              <Input value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} placeholder="e.g. Dr. Rahim Uddin" />
+              <Label>{getNameLabel()}</Label>
+              <Input value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} placeholder={getNamePlaceholder()} />
             </div>
             <div className="space-y-2">
               <Label>Email</Label>
@@ -629,7 +620,7 @@ const SettingsPage = () => {
                 <Input value={userForm.phone} onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })} placeholder="+880-1XXX-XXXXXX" />
               </div>
               <div className="space-y-2">
-                <Label>Password {editingUser && <span className="text-muted-foreground text-xs">(leave blank to keep)</span>}</Label>
+                <Label>Password <span className="text-muted-foreground text-xs">(leave blank to keep)</span></Label>
                 <Input type="password" value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} placeholder="••••••" />
               </div>
             </div>
@@ -648,16 +639,12 @@ const SettingsPage = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Affiliation</Label>
-              <Input value={userForm.affiliation} onChange={(e) => setUserForm({ ...userForm, affiliation: e.target.value })} placeholder="Hospital / Agency name" />
-            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUserModal(false)}>
               Cancel
             </Button>
-            <Button onClick={saveUser}>{editingUser ? "Update User" : "Create User"}</Button>
+            <Button onClick={saveUser}>Update User</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
