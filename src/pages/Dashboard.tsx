@@ -28,7 +28,7 @@ const stats = [
     bg: "bg-warning/10",
   },
   {
-    title: "Total Consumers",
+    title: "Total Patient",
     icon: Users,
     value: "3,892",
     sub: "",
