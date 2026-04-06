@@ -28,7 +28,7 @@ const stats = [
     bg: "bg-warning/10",
   },
   {
-    title: "Total Consumers",
+    title: "Total Patient",
     icon: Users,
     value: "3,892",
     sub: "",
@@ -73,7 +73,7 @@ const Dashboard = () => {
             <Plus className="h-4 w-4" /> Add New Ambulance
           </Button>
           <Button onClick={() => navigate("/consumers")} variant="outline" className="gap-2 border-secondary/30 text-secondary hover:bg-secondary/5">
-            <Plus className="h-4 w-4" /> Add New Consumer
+            <Plus className="h-4 w-4" /> Add New Patient
           </Button>
         </div>
       </div>
