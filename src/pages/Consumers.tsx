@@ -27,7 +27,7 @@ const Consumers = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="page-header">New Consumer Registration</h1>
+      <h1 className="page-header">New Patient Register</h1>
 
       <Card className="max-w-lg">
         <CardHeader>
