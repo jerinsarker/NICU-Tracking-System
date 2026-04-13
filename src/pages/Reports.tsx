@@ -2,6 +2,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   PieChart,
   Pie,
   Cell,
@@ -36,9 +42,25 @@ const summaryData = [
 ];
 
 const Reports = () => {
+  const handleExport = (metric: string, format: "csv" | "pdf") => {
+    // Placeholder export
+    const data = summaryData.find((r) => r.metric === metric);
+    if (format === "csv") {
+      const blob = new Blob([`Metric,Value\n${metric},${data?.value ?? ""}`], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${metric.replace(/\s+/g, "_")}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } else {
+      window.print();
+    }
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <h1 className="page-header">Transaction</h1>
+      <h1 className="page-header">Transaction & Analytics</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
@@ -87,16 +109,8 @@ const Reports = () => {
       </div>
 
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base">Summary Metrics</CardTitle>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1 text-xs">
-              <Download className="h-3 w-3" /> CSV
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1 text-xs">
-              <Download className="h-3 w-3" /> PDF
-            </Button>
-          </div>
+        <CardHeader>
+          <CardTitle className="text-base">Summary Reports</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border border-border overflow-hidden">
@@ -105,6 +119,7 @@ const Reports = () => {
                 <tr>
                   <th className="text-left px-4 py-3 font-semibold text-foreground">Metric</th>
                   <th className="text-right px-4 py-3 font-semibold text-foreground">Value</th>
+                  <th className="text-center px-4 py-3 font-semibold text-foreground">Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -112,6 +127,23 @@ const Reports = () => {
                   <tr key={row.metric} className="border-t border-border">
                     <td className="px-4 py-3 text-foreground">{row.metric}</td>
                     <td className="px-4 py-3 text-right font-semibold text-foreground">{row.value.toLocaleString()}</td>
+                    <td className="px-4 py-3 text-center">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="sm" className="gap-1 text-xs">
+                            <Download className="h-3 w-3" /> Export
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                          <DropdownMenuItem onClick={() => handleExport(row.metric, "csv")}>
+                            Export as CSV
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleExport(row.metric, "pdf")}>
+                            Export as PDF
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </td>
                   </tr>
                 ))}
               </tbody>
