@@ -26,7 +26,7 @@ const navItems = [
   { title: "Hospitals", url: "/hospitals", icon: Building2 },
   { title: "Patient", url: "/consumers", icon: Users },
   { title: "Ambulances", url: "/ambulances", icon: Ambulance },
-  { title: "Transaction", url: "/reports", icon: BarChart3 },
+  { title: "Transaction & Analytics", url: "/reports", icon: BarChart3 },
   { title: "Settings", url: "/settings", icon: Settings },
 ];
 
