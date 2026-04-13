@@ -19,7 +19,7 @@ const Consumers = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast.success("Consumer registered successfully!");
+    toast.success("Patient registered successfully!");
     setName("");
     setMobile("+880");
     setRelationship("");
@@ -31,7 +31,7 @@ const Consumers = () => {
 
       <Card className="max-w-lg">
         <CardHeader>
-          <CardTitle className="text-lg">Consumer Details</CardTitle>
+          <CardTitle className="text-lg">Patient Details</CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">

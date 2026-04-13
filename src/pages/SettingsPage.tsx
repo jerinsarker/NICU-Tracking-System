@@ -114,7 +114,7 @@ const initialRoles: Role[] = [
   },
   {
     id: "r3",
-    name: "Consumer",
+    name: "Patient",
     color: "bg-emerald-100 text-emerald-800 border-emerald-300",
     permissions: Object.fromEntries(
       systemModules.map((m) => [
@@ -149,7 +149,7 @@ const initialRoles: Role[] = [
 const initialUsers: SystemUser[] = [
   { id: "u1", name: "Dr. Rahim Uddin", email: "rahim@nicu.gov.bd", phone: "+880-1711-000001", role: "Super Admin", status: "Active" },
   { id: "u2", name: "Dhaka Medical College", email: "fatema@dhmc.gov.bd", phone: "+880-1711-000002", role: "Hospital", status: "Active" },
-  { id: "u3", name: "Kamal Hasan", email: "kamal@cmch.gov.bd", phone: "+880-1711-000003", role: "Consumer", status: "Active" },
+  { id: "u3", name: "Kamal Hasan", email: "kamal@cmch.gov.bd", phone: "+880-1711-000003", role: "Patient", status: "Active" },
   { id: "u4", name: "Rajshahi Medical College", email: "jahanara@rmch.gov.bd", phone: "+880-1711-000004", role: "Hospital", status: "Suspended" },
   { id: "u5", name: "Mizanur Rahman", email: "mizan@amb.gov.bd", phone: "+880-1711-000005", role: "Ambulance", status: "Active" },
 ];
@@ -157,7 +157,7 @@ const initialUsers: SystemUser[] = [
 const roleColorMap: Record<string, string> = {
   "Super Admin": "bg-amber-100 text-amber-800 border border-amber-300",
   "Hospital": "bg-blue-100 text-blue-800 border border-blue-300",
-  "Consumer": "bg-emerald-100 text-emerald-800 border border-emerald-300",
+  "Patient": "bg-emerald-100 text-emerald-800 border border-emerald-300",
   "Ambulance": "bg-purple-100 text-purple-800 border border-purple-300",
 };
 
