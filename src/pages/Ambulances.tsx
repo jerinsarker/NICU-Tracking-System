@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/select";
 import { Ambulance, Plus, Pencil, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { ListSearchBar, ListPagination, useListPagination } from "@/components/ListSearchPagination";
 
 const divisionDistricts: Record<string, string[]> = {
   Dhaka: ["Dhaka", "Gazipur", "Narayanganj", "Tangail", "Manikganj", "Munshiganj", "Narsingdi", "Faridpur", "Gopalganj", "Madaripur", "Rajbari", "Shariatpur", "Kishoreganj"],
@@ -80,6 +81,20 @@ const Ambulances = () => {
   const [formDivision, setFormDivision] = useState("");
   const [formDistrict, setFormDistrict] = useState("");
 
+  // Search & pagination
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filterFn = (a: AmbulanceRecord, q: string) =>
+    a.ownerName.toLowerCase().includes(q) ||
+    a.contactNumber.toLowerCase().includes(q) ||
+    a.regNumber.toLowerCase().includes(q);
+
+  const { paginatedData, totalPages, safePage, startIndex, filtered } = useListPagination(
+    ambulances, searchQuery, filterFn, pageSize, currentPage
+  );
+
   const openRegister = () => {
     setEditingAmb(null);
     setFormOwnership("individual");
@@ -115,7 +130,6 @@ const Ambulances = () => {
       toast.error("Please fill all required fields");
       return;
     }
-
     if (editingAmb) {
       setAmbulances((prev) =>
         prev.map((a) =>
@@ -170,6 +184,13 @@ const Ambulances = () => {
 
       <Card>
         <CardContent className="pt-6">
+          <div className="mb-4">
+            <ListSearchBar
+              searchQuery={searchQuery}
+              onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
+              searchPlaceholder="Search by owner name, contact or reg number..."
+            />
+          </div>
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -187,9 +208,9 @@ const Ambulances = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {ambulances.map((a, idx) => (
+                  {paginatedData.map((a, idx) => (
                     <tr key={a.id} className="border-t border-border hover:bg-muted/40 transition-colors">
-                      <td className="px-4 py-3 text-muted-foreground">{idx + 1}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{startIndex + idx + 1}</td>
                       <td className="px-4 py-3 font-medium text-foreground">{a.ownerName}</td>
                       <td className="px-4 py-3 text-muted-foreground">{a.regNumber}</td>
                       <td className="px-4 py-3 text-muted-foreground">{a.driverName}</td>
@@ -215,15 +236,27 @@ const Ambulances = () => {
                       </td>
                     </tr>
                   ))}
-                  {ambulances.length === 0 && (
+                  {paginatedData.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">No ambulances registered yet.</td>
+                      <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
+                        {searchQuery ? "No ambulances found." : "No ambulances registered yet."}
+                      </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
           </div>
+          <ListPagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            pageSize={pageSize}
+            onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
+            totalItems={filtered.length}
+            startIndex={startIndex}
+            endIndex={startIndex + pageSize}
+          />
         </CardContent>
       </Card>
 
@@ -240,9 +273,7 @@ const Ambulances = () => {
             <div className="space-y-2">
               <Label>Ownership Type *</Label>
               <Select value={formOwnership} onValueChange={(v: "individual" | "agency") => setFormOwnership(v)}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
+                <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="individual">Individual/Own</SelectItem>
                   <SelectItem value="agency">Agency</SelectItem>
@@ -312,9 +343,7 @@ const Ambulances = () => {
                 <div className="space-y-2">
                   <Label>Division</Label>
                   <Select value={formDivision} onValueChange={(v) => { setFormDivision(v); setFormDistrict(""); }}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select division" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select division" /></SelectTrigger>
                     <SelectContent>
                       {Object.keys(divisionDistricts).map((div) => (
                         <SelectItem key={div} value={div}>{div}</SelectItem>
@@ -325,9 +354,7 @@ const Ambulances = () => {
                 <div className="space-y-2">
                   <Label>District</Label>
                   <Select value={formDistrict} onValueChange={setFormDistrict} disabled={!formDivision}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select district" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select district" /></SelectTrigger>
                     <SelectContent>
                       {availableDistricts.map((dist) => (
                         <SelectItem key={dist} value={dist}>{dist}</SelectItem>
