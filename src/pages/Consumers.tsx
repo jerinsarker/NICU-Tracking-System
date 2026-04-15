@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Users, Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { ListSearchBar, ListPagination, useListPagination } from "@/components/ListSearchPagination";
 
 interface Patient {
   id: string;
@@ -54,6 +55,18 @@ const Consumers = () => {
   const [formMobile, setFormMobile] = useState("+880");
   const [formRelationship, setFormRelationship] = useState("");
 
+  // Search & pagination
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  const filterFn = (p: Patient, q: string) =>
+    p.guardianName.toLowerCase().includes(q) || p.mobile.toLowerCase().includes(q);
+
+  const { paginatedData, totalPages, safePage, startIndex, filtered } = useListPagination(
+    patients, searchQuery, filterFn, pageSize, currentPage
+  );
+
   const openRegister = () => {
     setEditingPatient(null);
     setFormGuardian("");
@@ -75,7 +88,6 @@ const Consumers = () => {
       toast.error("Please fill all required fields");
       return;
     }
-
     if (editingPatient) {
       setPatients((prev) =>
         prev.map((p) =>
@@ -127,6 +139,13 @@ const Consumers = () => {
 
       <Card>
         <CardContent className="pt-6">
+          <div className="mb-4">
+            <ListSearchBar
+              searchQuery={searchQuery}
+              onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
+              searchPlaceholder="Search by guardian name or phone..."
+            />
+          </div>
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -141,9 +160,9 @@ const Consumers = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {patients.map((p, idx) => (
+                  {paginatedData.map((p, idx) => (
                     <tr key={p.id} className="border-t border-border hover:bg-muted/40 transition-colors">
-                      <td className="px-4 py-3 text-muted-foreground">{idx + 1}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{startIndex + idx + 1}</td>
                       <td className="px-4 py-3 font-medium text-foreground">{p.guardianName}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.mobile}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.relationship}</td>
@@ -162,10 +181,10 @@ const Consumers = () => {
                       </td>
                     </tr>
                   ))}
-                  {patients.length === 0 && (
+                  {paginatedData.length === 0 && (
                     <tr>
                       <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                        No patients registered yet.
+                        {searchQuery ? "No patients found." : "No patients registered yet."}
                       </td>
                     </tr>
                   )}
@@ -173,6 +192,16 @@ const Consumers = () => {
               </table>
             </div>
           </div>
+          <ListPagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            pageSize={pageSize}
+            onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
+            totalItems={filtered.length}
+            startIndex={startIndex}
+            endIndex={startIndex + pageSize}
+          />
         </CardContent>
       </Card>
 

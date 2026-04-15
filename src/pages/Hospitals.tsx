@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -36,12 +36,22 @@ import {
   QrCode,
   AlertTriangle,
   BedDouble,
-  Send,
   Upload,
 } from "lucide-react";
 import { toast } from "sonner";
+import { ListSearchBar, ListPagination, useListPagination } from "@/components/ListSearchPagination";
 
-// ─── Types ───
+const divisionDistricts: Record<string, string[]> = {
+  Dhaka: ["Dhaka", "Gazipur", "Narayanganj", "Tangail", "Manikganj", "Munshiganj", "Narsingdi", "Faridpur", "Gopalganj", "Madaripur", "Rajbari", "Shariatpur", "Kishoreganj"],
+  Chattogram: ["Chattogram", "Cox's Bazar", "Comilla", "Brahmanbaria", "Noakhali", "Lakshmipur", "Feni", "Chandpur", "Rangamati", "Khagrachari", "Bandarban"],
+  Rajshahi: ["Rajshahi", "Bogra", "Pabna", "Sirajganj", "Natore", "Naogaon", "Chapainawabganj", "Joypurhat"],
+  Khulna: ["Khulna", "Jessore", "Satkhira", "Bagerhat", "Narail", "Magura", "Kushtia", "Meherpur", "Chuadanga", "Jhenaidah"],
+  Barishal: ["Barishal", "Patuakhali", "Bhola", "Pirojpur", "Jhalokathi", "Barguna"],
+  Sylhet: ["Sylhet", "Moulvibazar", "Habiganj", "Sunamganj"],
+  Rangpur: ["Rangpur", "Dinajpur", "Kurigram", "Gaibandha", "Nilphamari", "Lalmonirhat", "Thakurgaon", "Panchagarh"],
+  Mymensingh: ["Mymensingh", "Jamalpur", "Netrokona", "Sherpur"],
+};
+
 interface HospitalBed {
   id: string;
   label: string;
@@ -51,18 +61,19 @@ interface HospitalBed {
 interface Hospital {
   id: string;
   name: string;
-  location: string;
+  division: string;
+  district: string;
   phone: string;
   nicuAvailable: boolean;
   beds: HospitalBed[];
 }
 
-// ─── Seed Data ───
 const initialHospitals: Hospital[] = [
   {
     id: "h1",
     name: "Dhaka Medical College",
-    location: "Dhaka, Bangladesh",
+    division: "Dhaka",
+    district: "Dhaka",
     phone: "+880-2-55165001",
     nicuAvailable: true,
     beds: [
@@ -74,7 +85,8 @@ const initialHospitals: Hospital[] = [
   {
     id: "h2",
     name: "National NICU Center",
-    location: "Chittagong, Bangladesh",
+    division: "Chattogram",
+    district: "Chattogram",
     phone: "+880-31-619890",
     nicuAvailable: true,
     beds: [
@@ -85,7 +97,8 @@ const initialHospitals: Hospital[] = [
   {
     id: "h3",
     name: "Upazila Health Complex",
-    location: "Tangail, Bangladesh",
+    division: "Dhaka",
+    district: "Tangail",
     phone: "+880-921-62345",
     nicuAvailable: false,
     beds: [],
@@ -98,9 +111,15 @@ const Hospitals = () => {
   const [editingHospital, setEditingHospital] = useState<Hospital | null>(null);
   const [deleteHospitalId, setDeleteHospitalId] = useState<string | null>(null);
 
+  // Search & pagination
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pageSize, setPageSize] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
+
   // Form state
   const [formName, setFormName] = useState("");
-  const [formLocation, setFormLocation] = useState("");
+  const [formDivision, setFormDivision] = useState("");
+  const [formDistrict, setFormDistrict] = useState("");
   const [formPhone, setFormPhone] = useState("+880");
   const [formNicu, setFormNicu] = useState("yes");
   const [formTotalBeds, setFormTotalBeds] = useState(1);
@@ -116,11 +135,19 @@ const Hospitals = () => {
   const [contactName, setContactName] = useState("");
   const [admPhone, setAdmPhone] = useState("+880");
 
-  // ─── Handlers ───
+  const filterFn = (h: Hospital, q: string) => h.name.toLowerCase().includes(q);
+
+  const { paginatedData, totalPages, safePage, startIndex, filtered } = useListPagination(
+    hospitals, searchQuery, filterFn, pageSize, currentPage
+  );
+
+  const availableFormDistricts = formDivision ? divisionDistricts[formDivision] || [] : [];
+
   const openRegister = () => {
     setEditingHospital(null);
     setFormName("");
-    setFormLocation("");
+    setFormDivision("");
+    setFormDistrict("");
     setFormPhone("+880");
     setFormNicu("yes");
     setFormTotalBeds(1);
@@ -130,7 +157,8 @@ const Hospitals = () => {
   const openEdit = (h: Hospital) => {
     setEditingHospital(h);
     setFormName(h.name);
-    setFormLocation(h.location);
+    setFormDivision(h.division);
+    setFormDistrict(h.district);
     setFormPhone(h.phone);
     setFormNicu(h.nicuAvailable ? "yes" : "no");
     setFormTotalBeds(h.beds.length || 1);
@@ -139,18 +167,17 @@ const Hospitals = () => {
   };
 
   const handleSubmit = () => {
-    if (!formName || !formLocation || !formPhone) {
+    if (!formName || !formDivision || !formDistrict || !formPhone) {
       toast.error("Please fill all required fields");
       return;
     }
-
     const isNicu = formNicu === "yes";
 
     if (editingHospital) {
       setHospitals((prev) =>
         prev.map((h) =>
           h.id === editingHospital.id
-            ? { ...h, name: formName, location: formLocation, phone: formPhone, nicuAvailable: isNicu }
+            ? { ...h, name: formName, division: formDivision, district: formDistrict, phone: formPhone, nicuAvailable: isNicu }
             : h
         )
       );
@@ -163,11 +190,11 @@ const Hospitals = () => {
             status: "available" as const,
           }))
         : [];
-
       const newHospital: Hospital = {
         id: `h${Date.now()}`,
         name: formName,
-        location: formLocation,
+        division: formDivision,
+        district: formDistrict,
         phone: formPhone,
         nicuAvailable: isNicu,
         beds,
@@ -211,7 +238,6 @@ const Hospitals = () => {
             : h
         )
       );
-      // Update editing hospital reference
       setEditingHospital((prev) =>
         prev ? { ...prev, beds: prev.beds.filter((b) => b.id !== deleteBedId) } : null
       );
@@ -243,14 +269,12 @@ const Hospitals = () => {
     }
   };
 
-  // Get the live version of editing hospital from state
   const liveEditingHospital = editingHospital
     ? hospitals.find((h) => h.id === editingHospital.id) ?? editingHospital
     : null;
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header with Add button */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Building2 className="h-7 w-7 text-primary" />
@@ -261,9 +285,15 @@ const Hospitals = () => {
         </Button>
       </div>
 
-      {/* Hospital List Table */}
       <Card>
         <CardContent className="pt-6">
+          <div className="mb-4">
+            <ListSearchBar
+              searchQuery={searchQuery}
+              onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
+              searchPlaceholder="Search by hospital name..."
+            />
+          </div>
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
@@ -271,7 +301,8 @@ const Hospitals = () => {
                   <tr>
                     <th className="text-left px-4 py-3 font-semibold text-foreground w-12">SN.</th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Hospital Name</th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">Location</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Division</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">District</th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Phone</th>
                     <th className="text-center px-4 py-3 font-semibold text-foreground">NICU</th>
                     <th className="text-center px-4 py-3 font-semibold text-foreground">Beds</th>
@@ -279,17 +310,15 @@ const Hospitals = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {hospitals.map((h, idx) => (
+                  {paginatedData.map((h, idx) => (
                     <tr key={h.id} className="border-t border-border hover:bg-muted/40 transition-colors">
-                      <td className="px-4 py-3 text-muted-foreground">{idx + 1}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{startIndex + idx + 1}</td>
                       <td className="px-4 py-3 font-medium text-foreground">{h.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{h.location}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{h.division}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{h.district}</td>
                       <td className="px-4 py-3 text-muted-foreground">{h.phone}</td>
                       <td className="px-4 py-3 text-center">
-                        <Badge
-                          variant={h.nicuAvailable ? "default" : "secondary"}
-                          className="text-xs"
-                        >
+                        <Badge variant={h.nicuAvailable ? "default" : "secondary"} className="text-xs">
                           {h.nicuAvailable ? "Yes" : "No"}
                         </Badge>
                       </td>
@@ -312,10 +341,10 @@ const Hospitals = () => {
                       </td>
                     </tr>
                   ))}
-                  {hospitals.length === 0 && (
+                  {paginatedData.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                        No hospitals registered yet.
+                      <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                        {searchQuery ? "No hospitals found." : "No hospitals registered yet."}
                       </td>
                     </tr>
                   )}
@@ -323,10 +352,20 @@ const Hospitals = () => {
               </table>
             </div>
           </div>
+          <ListPagination
+            currentPage={safePage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+            pageSize={pageSize}
+            onPageSizeChange={(s) => { setPageSize(s); setCurrentPage(1); }}
+            totalItems={filtered.length}
+            startIndex={startIndex}
+            endIndex={startIndex + pageSize}
+          />
         </CardContent>
       </Card>
 
-      {/* ═══ Register / Edit Modal ═══ */}
+      {/* Register / Edit Modal */}
       <Dialog open={registerModal} onOpenChange={setRegisterModal}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
@@ -337,42 +376,49 @@ const Hospitals = () => {
           </DialogHeader>
 
           <div className="space-y-6 pt-2">
-            {/* Identity Fields */}
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Hospital Name *</Label>
-                <Input
-                  placeholder="e.g. City Hospital"
-                  value={formName}
-                  onChange={(e) => setFormName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Location *</Label>
-                <Input
-                  placeholder="e.g. Dhaka, Bangladesh"
-                  value={formLocation}
-                  onChange={(e) => setFormLocation(e.target.value)}
-                />
+                <Input placeholder="e.g. City Hospital" value={formName} onChange={(e) => setFormName(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label>Phone *</Label>
-                <Input
-                  placeholder="+880-XX-XXXX"
-                  value={formPhone}
-                  onChange={(e) => setFormPhone(e.target.value)}
-                />
+                <Input placeholder="+880-XX-XXXX" value={formPhone} onChange={(e) => setFormPhone(e.target.value)} />
               </div>
             </div>
 
-            {/* NICU Toggle */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Division *</Label>
+                <Select value={formDivision} onValueChange={(v) => { setFormDivision(v); setFormDistrict(""); }}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select division" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.keys(divisionDistricts).map((div) => (
+                      <SelectItem key={div} value={div}>{div}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>District *</Label>
+                <Select value={formDistrict} onValueChange={setFormDistrict} disabled={!formDivision}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select district" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableFormDistricts.map((dist) => (
+                      <SelectItem key={dist} value={dist}>{dist}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="space-y-3">
               <Label>NICU Available?</Label>
-              <RadioGroup
-                value={formNicu}
-                onValueChange={setFormNicu}
-                className="flex gap-6"
-              >
+              <RadioGroup value={formNicu} onValueChange={setFormNicu} className="flex gap-6">
                 <div className="flex items-center gap-2">
                   <RadioGroupItem value="yes" id="reg-nicu-yes" />
                   <Label htmlFor="reg-nicu-yes">Yes</Label>
@@ -384,7 +430,6 @@ const Hospitals = () => {
               </RadioGroup>
             </div>
 
-            {/* NICU = Yes: Bed setup */}
             {formNicu === "yes" && (
               <div className="space-y-4 p-4 rounded-lg bg-accent/50 border border-border">
                 {!editingHospital ? (
@@ -395,81 +440,41 @@ const Hospitals = () => {
                         Upload NICU Bed Pictures
                       </Label>
                       <div className="flex gap-3">
-                        <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">
-                          Bed 1 Photo
-                        </div>
-                        <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">
-                          Bed 2 Photo
-                        </div>
+                        <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">Bed 1 Photo</div>
+                        <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">Bed 2 Photo</div>
                       </div>
                     </div>
-
                     <div className="space-y-2 max-w-xs">
                       <Label>Total NICU Beds</Label>
-                      <Input
-                        type="number"
-                        min={1}
-                        value={formTotalBeds}
-                        onChange={(e) => setFormTotalBeds(Number(e.target.value))}
-                      />
+                      <Input type="number" min={1} value={formTotalBeds} onChange={(e) => setFormTotalBeds(Number(e.target.value))} />
                     </div>
                   </>
                 ) : (
-                  /* Edit mode: manage existing beds */
                   <div className="space-y-4">
                     <p className="text-sm font-semibold text-foreground flex items-center gap-2">
                       <BedDouble className="h-4 w-4 text-primary" />
                       Manage NICU Beds ({liveEditingHospital?.beds.length ?? 0} total)
                     </p>
-
-                    {/* Existing beds */}
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       {liveEditingHospital?.beds.map((bed) => (
-                        <div
-                          key={bed.id}
-                          className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card"
-                        >
+                        <div key={bed.id} className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-card">
                           <div className="flex items-center gap-2">
                             <QrCode className="h-4 w-4 text-primary/70" />
                             <span className="text-xs font-semibold">{bed.label}</span>
-                            <Badge
-                              variant={bed.status === "available" ? "default" : "secondary"}
-                              className="text-[10px] px-1.5"
-                            >
-                              {bed.status}
-                            </Badge>
+                            <Badge variant={bed.status === "available" ? "default" : "secondary"} className="text-[10px] px-1.5">{bed.status}</Badge>
                           </div>
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-6 w-6"
-                            onClick={() => setDeleteBedId(bed.id)}
-                          >
+                          <Button size="icon" variant="ghost" className="h-6 w-6" onClick={() => setDeleteBedId(bed.id)}>
                             <Trash2 className="h-3 w-3 text-destructive" />
                           </Button>
                         </div>
                       ))}
                     </div>
-
-                    {/* Add more beds */}
                     <div className="flex items-end gap-3">
                       <div className="space-y-2">
                         <Label>Add Beds</Label>
-                        <Input
-                          type="number"
-                          min={1}
-                          value={newBedCount}
-                          onChange={(e) => setNewBedCount(Number(e.target.value))}
-                          className="w-24"
-                        />
+                        <Input type="number" min={1} value={newBedCount} onChange={(e) => setNewBedCount(Number(e.target.value))} className="w-24" />
                       </div>
-                      <Button
-                        variant="outline"
-                        className="gap-1"
-                        onClick={() => {
-                          if (editingHospital) addBedsToHospital(editingHospital.id, newBedCount);
-                        }}
-                      >
+                      <Button variant="outline" className="gap-1" onClick={() => { if (editingHospital) addBedsToHospital(editingHospital.id, newBedCount); }}>
                         <Plus className="h-3.5 w-3.5" /> Add
                       </Button>
                     </div>
@@ -478,7 +483,6 @@ const Hospitals = () => {
               </div>
             )}
 
-            {/* NICU = No: Referral message */}
             {formNicu === "no" && (
               <div className="flex items-start gap-3 p-4 rounded-lg bg-warning/10 border border-warning/30">
                 <AlertTriangle className="h-5 w-5 text-warning flex-shrink-0 mt-0.5" />
@@ -488,59 +492,39 @@ const Hospitals = () => {
               </div>
             )}
 
-            {/* Submit */}
             <Button onClick={handleSubmit} className="w-full h-11 text-base font-bold gap-2">
-              {editingHospital ? (
-                <>
-                  <Pencil className="h-4 w-4" /> Update Hospital
-                </>
-              ) : (
-                <>
-                  <Plus className="h-4 w-4" /> Register Hospital
-                </>
-              )}
+              {editingHospital ? (<><Pencil className="h-4 w-4" /> Update Hospital</>) : (<><Plus className="h-4 w-4" /> Register Hospital</>)}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* ═══ Delete Hospital Confirm ═══ */}
       <AlertDialog open={!!deleteHospitalId} onOpenChange={() => setDeleteHospitalId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Hospital?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently remove the hospital and all associated beds.
-            </AlertDialogDescription>
+            <AlertDialogDescription>This action cannot be undone. This will permanently remove the hospital and all associated beds.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Delete
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Delete</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ═══ Delete Bed Confirm ═══ */}
       <AlertDialog open={!!deleteBedId} onOpenChange={() => setDeleteBedId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Remove Bed?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This bed will be permanently removed from the hospital.
-            </AlertDialogDescription>
+            <AlertDialogDescription>This bed will be permanently removed from the hospital.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmDeleteBed} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              Remove
-            </AlertDialogAction>
+            <AlertDialogAction onClick={confirmDeleteBed} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Remove</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ═══ Quick Admission Modal ═══ */}
       <Dialog open={!!admissionModal} onOpenChange={() => setAdmissionModal(null)}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
@@ -553,27 +537,17 @@ const Hospitals = () => {
             <div className="space-y-2">
               <Label>Baby Name</Label>
               <div className="flex gap-2">
-                <Input
-                  placeholder="Enter baby name (optional)"
-                  value={babyName}
-                  onChange={(e) => setBabyName(e.target.value)}
-                  className="flex-1"
-                />
-                <Button variant="secondary" className="font-semibold" onClick={() => setBabyName("")}>
-                  SKIP
-                </Button>
+                <Input placeholder="Enter baby name (optional)" value={babyName} onChange={(e) => setBabyName(e.target.value)} className="flex-1" />
+                <Button variant="secondary" className="font-semibold" onClick={() => setBabyName("")}>SKIP</Button>
               </div>
             </div>
-
             <div className="space-y-4">
               <p className="text-sm font-semibold text-foreground">Guardian Info</p>
               <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
                   <Label>Relation</Label>
                   <Select value={relation} onValueChange={setRelation}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
+                    <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                     <SelectContent>
                       <SelectItem value="father">Father</SelectItem>
                       <SelectItem value="mother">Mother</SelectItem>
@@ -583,26 +557,16 @@ const Hospitals = () => {
                 </div>
                 <div className="space-y-2">
                   <Label>Contact Name</Label>
-                  <Input
-                    placeholder="Full name"
-                    value={contactName}
-                    onChange={(e) => setContactName(e.target.value)}
-                  />
+                  <Input placeholder="Full name" value={contactName} onChange={(e) => setContactName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label>Phone No</Label>
-                  <Input
-                    placeholder="+880-XXXX"
-                    value={admPhone}
-                    onChange={(e) => setAdmPhone(e.target.value)}
-                  />
+                  <Input placeholder="+880-XXXX" value={admPhone} onChange={(e) => setAdmPhone(e.target.value)} />
                 </div>
               </div>
             </div>
-
             <Button onClick={handleConfirmAdmission} className="w-full h-12 text-base font-bold gap-2">
-              <BedDouble className="h-5 w-5" />
-              Confirm & Occupy Bed
+              <BedDouble className="h-5 w-5" /> Confirm & Occupy Bed
             </Button>
           </div>
         </DialogContent>
