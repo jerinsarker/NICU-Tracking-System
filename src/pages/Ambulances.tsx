@@ -31,7 +31,6 @@ import {
 import { Ambulance, Plus, Pencil, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
-// Bangladesh divisions and districts
 const divisionDistricts: Record<string, string[]> = {
   Dhaka: ["Dhaka", "Gazipur", "Narayanganj", "Tangail", "Manikganj", "Munshiganj", "Narsingdi", "Faridpur", "Gopalganj", "Madaripur", "Rajbari", "Shariatpur", "Kishoreganj"],
   Chattogram: ["Chattogram", "Cox's Bazar", "Comilla", "Brahmanbaria", "Noakhali", "Lakshmipur", "Feni", "Chandpur", "Rangamati", "Khagrachari", "Bandarban"],
@@ -70,12 +69,9 @@ const Ambulances = () => {
   const [editingAmb, setEditingAmb] = useState<AmbulanceRecord | null>(null);
   const [deleteAmbId, setDeleteAmbId] = useState<string | null>(null);
 
-  // Section 1 form
   const [formOwnership, setFormOwnership] = useState<"individual" | "agency">("individual");
   const [formOwnerName, setFormOwnerName] = useState("");
   const [formContact, setFormContact] = useState("+880");
-
-  // Section 2 form
   const [formRegNumber, setFormRegNumber] = useState("");
   const [formDriverName, setFormDriverName] = useState("");
   const [formDriverContact, setFormDriverContact] = useState("+880");
@@ -231,7 +227,6 @@ const Ambulances = () => {
         </CardContent>
       </Card>
 
-      {/* Register / Edit Modal */}
       <Dialog open={registerModal} onOpenChange={setRegisterModal}>
         <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
@@ -241,84 +236,78 @@ const Ambulances = () => {
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-6 pt-2">
-            {/* Section 1: Ownership Info */}
-            <div className="space-y-4 p-4 rounded-lg border border-border bg-muted/30">
-              <p className="text-sm font-semibold text-foreground">Section 1 — Ownership Information</p>
-              <div className="space-y-3">
-                <Label>Ownership Type *</Label>
-                <Select value={formOwnership} onValueChange={(v: "individual" | "agency") => setFormOwnership(v)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="individual">Individual/Own</SelectItem>
-                    <SelectItem value="agency">Agency</SelectItem>
-                  </SelectContent>
-                </Select>
+          <div className="space-y-4 pt-2">
+            <div className="space-y-2">
+              <Label>Ownership Type *</Label>
+              <Select value={formOwnership} onValueChange={(v: "individual" | "agency") => setFormOwnership(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="individual">Individual/Own</SelectItem>
+                  <SelectItem value="agency">Agency</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>{formOwnership === "agency" ? "Agency Name *" : "Owner Name *"}</Label>
+                <Input placeholder={formOwnership === "agency" ? "Agency name" : "Full name"} value={formOwnerName} onChange={(e) => setFormOwnerName(e.target.value)} />
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>{formOwnership === "agency" ? "Agency Name *" : "Owner Name *"}</Label>
-                  <Input placeholder={formOwnership === "agency" ? "Agency name" : "Full name"} value={formOwnerName} onChange={(e) => setFormOwnerName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Contact Number *</Label>
-                  <Input value={formContact} onChange={(e) => setFormContact(e.target.value)} />
-                </div>
+              <div className="space-y-2">
+                <Label>Contact Number *</Label>
+                <Input value={formContact} onChange={(e) => setFormContact(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Registration Number *</Label>
+                <Input placeholder="e.g. Dhaka Metro-Cha-11-2233" value={formRegNumber} onChange={(e) => setFormRegNumber(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Driver Name *</Label>
+                <Input placeholder="Driver full name" value={formDriverName} onChange={(e) => setFormDriverName(e.target.value)} />
+              </div>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Driver Contact Number</Label>
+                <Input value={formDriverContact} onChange={(e) => setFormDriverContact(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>Vehicle Name</Label>
+                <Input placeholder="e.g. Toyota Hiace" value={formVehicleName} onChange={(e) => setFormVehicleName(e.target.value)} />
               </div>
             </div>
 
-            {/* Section 2: Vehicle & Service Details */}
-            <div className="space-y-4 p-4 rounded-lg border border-border bg-muted/30">
-              <p className="text-sm font-semibold text-foreground">Section 2 — Vehicle & Service Details</p>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Registration Number *</Label>
-                  <Input placeholder="e.g. Dhaka Metro-Cha-11-2233" value={formRegNumber} onChange={(e) => setFormRegNumber(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Driver Name *</Label>
-                  <Input placeholder="Driver full name" value={formDriverName} onChange={(e) => setFormDriverName(e.target.value)} />
-                </div>
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Upload className="h-4 w-4 text-muted-foreground" />
+                Vehicle Photos (2-3 photos)
+              </Label>
+              <div className="flex gap-3">
+                <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">Photo 1</div>
+                <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">Photo 2</div>
+                <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">Photo 3</div>
               </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="space-y-2">
-                  <Label>Driver Contact Number</Label>
-                  <Input value={formDriverContact} onChange={(e) => setFormDriverContact(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label>Vehicle Name</Label>
-                  <Input placeholder="e.g. Toyota Hiace" value={formVehicleName} onChange={(e) => setFormVehicleName(e.target.value)} />
-                </div>
-              </div>
+            </div>
 
-              <div className="space-y-2">
-                <Label className="flex items-center gap-2">
-                  <Upload className="h-4 w-4 text-muted-foreground" />
-                  Vehicle Photos (2-3 photos)
-                </Label>
-                <div className="flex gap-3">
-                  <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">Photo 1</div>
-                  <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">Photo 2</div>
-                  <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">Photo 3</div>
+            <div className="space-y-2">
+              <Label>NICU/ICU Facilities</Label>
+              <RadioGroup value={formNicu} onValueChange={setFormNicu} className="flex gap-6">
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="yes" id="amb-nicu-yes" />
+                  <Label htmlFor="amb-nicu-yes">Yes</Label>
                 </div>
-              </div>
+                <div className="flex items-center gap-2">
+                  <RadioGroupItem value="no" id="amb-nicu-no" />
+                  <Label htmlFor="amb-nicu-no">No</Label>
+                </div>
+              </RadioGroup>
+            </div>
 
-              <div className="space-y-3">
-                <Label>NICU/ICU Facilities</Label>
-                <RadioGroup value={formNicu} onValueChange={setFormNicu} className="flex gap-6">
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="yes" id="amb-nicu-yes" />
-                    <Label htmlFor="amb-nicu-yes">Yes</Label>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <RadioGroupItem value="no" id="amb-nicu-no" />
-                    <Label htmlFor="amb-nicu-no">No</Label>
-                  </div>
-                </RadioGroup>
-              </div>
-
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Service Area (Catchment)</Label>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
                   <Label>Division</Label>
@@ -356,7 +345,6 @@ const Ambulances = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deleteAmbId} onOpenChange={() => setDeleteAmbId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

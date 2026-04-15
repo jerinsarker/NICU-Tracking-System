@@ -35,16 +35,13 @@ interface Patient {
   guardianName: string;
   mobile: string;
   relationship: string;
-  babyName: string;
-  gender: string;
-  hospital: string;
   status: "Admitted" | "Discharged" | "Referred";
 }
 
 const initialPatients: Patient[] = [
-  { id: "p1", guardianName: "Kamal Hasan", mobile: "+880-1711-123456", relationship: "Father", babyName: "Baby Hasan", gender: "Male", hospital: "Dhaka Medical College", status: "Admitted" },
-  { id: "p2", guardianName: "Fatema Begum", mobile: "+880-1812-654321", relationship: "Mother", babyName: "Baby Fatema", gender: "Female", hospital: "National NICU Center", status: "Discharged" },
-  { id: "p3", guardianName: "Rahim Uddin", mobile: "+880-1911-987654", relationship: "Father", babyName: "Baby Rahim", gender: "Male", hospital: "Dhaka Medical College", status: "Referred" },
+  { id: "p1", guardianName: "Kamal Hasan", mobile: "+880-1711-123456", relationship: "Father", status: "Admitted" },
+  { id: "p2", guardianName: "Fatema Begum", mobile: "+880-1812-654321", relationship: "Mother", status: "Discharged" },
+  { id: "p3", guardianName: "Rahim Uddin", mobile: "+880-1911-987654", relationship: "Father", status: "Referred" },
 ];
 
 const Consumers = () => {
@@ -56,18 +53,12 @@ const Consumers = () => {
   const [formGuardian, setFormGuardian] = useState("");
   const [formMobile, setFormMobile] = useState("+880");
   const [formRelationship, setFormRelationship] = useState("");
-  const [formBabyName, setFormBabyName] = useState("");
-  const [formGender, setFormGender] = useState("");
-  const [formHospital, setFormHospital] = useState("");
 
   const openRegister = () => {
     setEditingPatient(null);
     setFormGuardian("");
     setFormMobile("+880");
     setFormRelationship("");
-    setFormBabyName("");
-    setFormGender("");
-    setFormHospital("");
     setRegisterModal(true);
   };
 
@@ -76,9 +67,6 @@ const Consumers = () => {
     setFormGuardian(p.guardianName);
     setFormMobile(p.mobile);
     setFormRelationship(p.relationship);
-    setFormBabyName(p.babyName);
-    setFormGender(p.gender);
-    setFormHospital(p.hospital);
     setRegisterModal(true);
   };
 
@@ -92,7 +80,7 @@ const Consumers = () => {
       setPatients((prev) =>
         prev.map((p) =>
           p.id === editingPatient.id
-            ? { ...p, guardianName: formGuardian, mobile: formMobile, relationship: formRelationship, babyName: formBabyName, gender: formGender, hospital: formHospital }
+            ? { ...p, guardianName: formGuardian, mobile: formMobile, relationship: formRelationship }
             : p
         )
       );
@@ -103,9 +91,6 @@ const Consumers = () => {
         guardianName: formGuardian,
         mobile: formMobile,
         relationship: formRelationship,
-        babyName: formBabyName,
-        gender: formGender,
-        hospital: formHospital,
         status: "Admitted",
       };
       setPatients((prev) => [...prev, newPatient]);
@@ -151,8 +136,6 @@ const Consumers = () => {
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Guardian Name</th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Mobile</th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Relationship</th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">Baby Name</th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">Hospital</th>
                     <th className="text-center px-4 py-3 font-semibold text-foreground">Status</th>
                     <th className="text-center px-4 py-3 font-semibold text-foreground">Action</th>
                   </tr>
@@ -164,8 +147,6 @@ const Consumers = () => {
                       <td className="px-4 py-3 font-medium text-foreground">{p.guardianName}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.mobile}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.relationship}</td>
-                      <td className="px-4 py-3 text-foreground">{p.babyName || "—"}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{p.hospital || "—"}</td>
                       <td className="px-4 py-3 text-center">
                         <Badge variant={statusColor(p.status)} className="text-xs">{p.status}</Badge>
                       </td>
@@ -183,7 +164,7 @@ const Consumers = () => {
                   ))}
                   {patients.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                      <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                         No patients registered yet.
                       </td>
                     </tr>
@@ -195,9 +176,8 @@ const Consumers = () => {
         </CardContent>
       </Card>
 
-      {/* Register / Edit Modal */}
       <Dialog open={registerModal} onOpenChange={setRegisterModal}>
-        <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
@@ -205,15 +185,13 @@ const Consumers = () => {
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4 pt-2">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Parent / Guardian Name *</Label>
-                <Input placeholder="Full name" value={formGuardian} onChange={(e) => setFormGuardian(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Mobile Number *</Label>
-                <Input placeholder="+880-1XXX-XXXXXX" value={formMobile} onChange={(e) => setFormMobile(e.target.value)} />
-              </div>
+            <div className="space-y-2">
+              <Label>Parent / Guardian Name *</Label>
+              <Input placeholder="Full name" value={formGuardian} onChange={(e) => setFormGuardian(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Mobile Number *</Label>
+              <Input placeholder="+880-1XXX-XXXXXX" value={formMobile} onChange={(e) => setFormMobile(e.target.value)} />
             </div>
             <div className="space-y-2">
               <Label>Relationship *</Label>
@@ -228,28 +206,6 @@ const Consumers = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Baby Name</Label>
-                <Input placeholder="Baby's name" value={formBabyName} onChange={(e) => setFormBabyName(e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label>Gender</Label>
-                <Select value={formGender} onValueChange={setFormGender}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select gender" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Male">Male</SelectItem>
-                    <SelectItem value="Female">Female</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Assigned Hospital</Label>
-              <Input placeholder="e.g. Dhaka Medical College" value={formHospital} onChange={(e) => setFormHospital(e.target.value)} />
-            </div>
             <Button onClick={handleSubmit} className="w-full gap-2">
               <Users className="h-4 w-4" /> {editingPatient ? "Update Patient" : "Register Patient"}
             </Button>
@@ -257,7 +213,6 @@ const Consumers = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <AlertDialog open={!!deletePatientId} onOpenChange={() => setDeletePatientId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>

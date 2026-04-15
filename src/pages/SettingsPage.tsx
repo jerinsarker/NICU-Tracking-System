@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -39,9 +40,9 @@ import {
   Settings,
   MapPin,
   Plus,
+  Shield,
 } from "lucide-react";
 
-// ─── Types ───
 interface SystemUser {
   id: string;
   name: string;
@@ -51,7 +52,6 @@ interface SystemUser {
   status: "Active" | "Suspended";
 }
 
-// ─── Seed Data ───
 const roleColorMap: Record<string, string> = {
   Hospital: "bg-blue-100 text-blue-800 border border-blue-300",
   Patient: "bg-emerald-100 text-emerald-800 border border-emerald-300",
@@ -67,7 +67,38 @@ const initialUsers: SystemUser[] = [
 
 const availableRoles = ["Hospital", "Patient", "Ambulance"];
 
-// Bangladesh divisions and districts
+const modules = ["Dashboard", "Hospital", "Ambulance", "Patient", "Transaction & Analytics", "Settings"];
+const permissions = ["View", "Create", "Update", "Delete"];
+
+type RolePermissions = Record<string, Record<string, boolean>>;
+
+const defaultRolePermissions: Record<string, RolePermissions> = {
+  Hospital: {
+    Dashboard: { View: true, Create: false, Update: false, Delete: false },
+    Hospital: { View: true, Create: false, Update: true, Delete: false },
+    Ambulance: { View: true, Create: false, Update: false, Delete: false },
+    Patient: { View: true, Create: true, Update: true, Delete: false },
+    "Transaction & Analytics": { View: true, Create: false, Update: false, Delete: false },
+    Settings: { View: false, Create: false, Update: false, Delete: false },
+  },
+  Ambulance: {
+    Dashboard: { View: true, Create: false, Update: false, Delete: false },
+    Hospital: { View: true, Create: false, Update: false, Delete: false },
+    Ambulance: { View: true, Create: false, Update: true, Delete: false },
+    Patient: { View: true, Create: false, Update: false, Delete: false },
+    "Transaction & Analytics": { View: true, Create: false, Update: false, Delete: false },
+    Settings: { View: false, Create: false, Update: false, Delete: false },
+  },
+  Patient: {
+    Dashboard: { View: true, Create: false, Update: false, Delete: false },
+    Hospital: { View: true, Create: false, Update: false, Delete: false },
+    Ambulance: { View: true, Create: false, Update: false, Delete: false },
+    Patient: { View: true, Create: false, Update: true, Delete: false },
+    "Transaction & Analytics": { View: true, Create: false, Update: false, Delete: false },
+    Settings: { View: false, Create: false, Update: false, Delete: false },
+  },
+};
+
 const defaultDivisionDistricts: Record<string, string[]> = {
   Dhaka: ["Dhaka", "Gazipur", "Narayanganj", "Tangail", "Manikganj", "Munshiganj", "Narsingdi", "Faridpur", "Gopalganj", "Madaripur", "Rajbari", "Shariatpur", "Kishoreganj"],
   Chattogram: ["Chattogram", "Cox's Bazar", "Comilla", "Brahmanbaria", "Noakhali", "Lakshmipur", "Feni", "Chandpur", "Rangamati", "Khagrachari", "Bandarban"],
@@ -79,22 +110,25 @@ const defaultDivisionDistricts: Record<string, string[]> = {
   Mymensingh: ["Mymensingh", "Jamalpur", "Netrokona", "Sherpur"],
 };
 
-// ─── Component ───
 const SettingsPage = () => {
-  // Tab 1: User Management
+  // Users
   const [users, setUsers] = useState<SystemUser[]>(initialUsers);
   const [userModal, setUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
   const [userForm, setUserForm] = useState({ name: "", email: "", phone: "", password: "", role: "" });
 
-  // Tab 2: System - Administration Units
+  // Role & Access
+  const [rolePerms, setRolePerms] = useState<Record<string, RolePermissions>>(defaultRolePermissions);
+  const [selectedRole, setSelectedRole] = useState<string>("Hospital");
+
+  // System
   const [divisionDistricts, setDivisionDistricts] = useState<Record<string, string[]>>(defaultDivisionDistricts);
   const [newDivision, setNewDivision] = useState("");
   const [newDistrict, setNewDistrict] = useState("");
   const [selectedDivision, setSelectedDivision] = useState<string>(Object.keys(defaultDivisionDistricts)[0]);
 
-  // ─── User Handlers ───
+  // User handlers
   const openEditUser = (u: SystemUser) => {
     setEditingUser(u);
     setUserForm({ name: u.name, email: u.email, phone: u.phone, password: "", role: u.role });
@@ -127,7 +161,25 @@ const SettingsPage = () => {
     );
   };
 
-  // ─── Division / District helpers ───
+  // Role permission toggle
+  const togglePermission = (mod: string, perm: string) => {
+    setRolePerms((prev) => ({
+      ...prev,
+      [selectedRole]: {
+        ...prev[selectedRole],
+        [mod]: {
+          ...prev[selectedRole][mod],
+          [perm]: !prev[selectedRole][mod][perm],
+        },
+      },
+    }));
+  };
+
+  const savePermissions = () => {
+    toast.success(`Permissions saved for "${selectedRole}" role!`);
+  };
+
+  // Division/District
   const addDivision = () => {
     const name = newDivision.trim();
     if (name && !divisionDistricts[name]) {
@@ -170,7 +222,6 @@ const SettingsPage = () => {
     }));
   };
 
-  // Dynamic label
   const getNameLabel = () => (userForm.role === "Hospital" ? "Hospital Name" : "Full Name");
   const getNamePlaceholder = () => (userForm.role === "Hospital" ? "e.g. Dhaka Medical College" : "e.g. Dr. Rahim Uddin");
 
@@ -182,16 +233,19 @@ const SettingsPage = () => {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2 h-11">
+        <TabsList className="grid w-full max-w-lg grid-cols-3 h-11">
           <TabsTrigger value="users" className="gap-1.5 text-xs sm:text-sm">
             <Users className="h-4 w-4" /> Users
+          </TabsTrigger>
+          <TabsTrigger value="roles" className="gap-1.5 text-xs sm:text-sm">
+            <Shield className="h-4 w-4" /> Role & Access
           </TabsTrigger>
           <TabsTrigger value="system" className="gap-1.5 text-xs sm:text-sm">
             <MapPin className="h-4 w-4" /> System
           </TabsTrigger>
         </TabsList>
 
-        {/* ═══ TAB 1 — USER MANAGEMENT ═══ */}
+        {/* TAB 1 — USERS */}
         <TabsContent value="users" className="mt-6">
           <Card>
             <CardHeader className="pb-4">
@@ -251,9 +305,69 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
 
-        {/* ═══ TAB 2 — SYSTEM (Administration Units) ═══ */}
+        {/* TAB 2 — ROLE & ACCESS */}
+        <TabsContent value="roles" className="mt-6 space-y-6">
+          <Card>
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary" /> Role & Access Permissions
+                </CardTitle>
+                <div className="flex gap-2">
+                  {availableRoles.map((role) => (
+                    <Badge
+                      key={role}
+                      variant={selectedRole === role ? "default" : "outline"}
+                      className={`cursor-pointer text-sm px-4 py-1.5 ${selectedRole === role ? "" : "hover:bg-muted"}`}
+                      onClick={() => setSelectedRole(role)}
+                    >
+                      {role}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="rounded-lg border border-border overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted">
+                      <tr>
+                        <th className="text-left px-4 py-3 font-semibold text-foreground">Module</th>
+                        {permissions.map((p) => (
+                          <th key={p} className="text-center px-4 py-3 font-semibold text-foreground">{p}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {modules.map((mod) => (
+                        <tr key={mod} className="border-t border-border hover:bg-muted/40 transition-colors">
+                          <td className="px-4 py-3 font-medium text-foreground">{mod}</td>
+                          {permissions.map((perm) => (
+                            <td key={perm} className="px-4 py-3 text-center">
+                              <Checkbox
+                                checked={rolePerms[selectedRole]?.[mod]?.[perm] ?? false}
+                                onCheckedChange={() => togglePermission(mod, perm)}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              <div className="mt-4 flex justify-end">
+                <Button onClick={savePermissions} className="gap-2">
+                  <Shield className="h-4 w-4" /> Save Access Permissions
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB 3 — SYSTEM */}
         <TabsContent value="system" className="mt-6 space-y-6">
-          {/* Divisions */}
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
@@ -261,7 +375,6 @@ const SettingsPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Division management */}
               <div className="space-y-3">
                 <Label className="text-sm font-semibold">Divisions</Label>
                 <div className="flex flex-wrap gap-2">
@@ -269,7 +382,7 @@ const SettingsPage = () => {
                     <Badge
                       key={div}
                       variant={selectedDivision === div ? "default" : "secondary"}
-                      className={`gap-1 pr-1 cursor-pointer ${selectedDivision === div ? "" : ""}`}
+                      className="gap-1 pr-1 cursor-pointer"
                       onClick={() => setSelectedDivision(div)}
                     >
                       {div}
@@ -296,7 +409,6 @@ const SettingsPage = () => {
                 </div>
               </div>
 
-              {/* Districts for selected division */}
               {selectedDivision && (
                 <div className="space-y-3 p-4 rounded-lg border border-border bg-muted/30">
                   <Label className="text-sm font-semibold">
@@ -333,8 +445,6 @@ const SettingsPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
-
-      {/* ═══ MODALS ═══ */}
 
       {/* Edit User Modal */}
       <Dialog open={userModal} onOpenChange={setUserModal}>
