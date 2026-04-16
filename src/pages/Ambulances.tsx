@@ -175,7 +175,7 @@ const Ambulances = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Ambulance className="h-7 w-7 text-primary" />
-          <h1 className="page-header">Ambulances</h1>
+          <h1 className="page-header">Ambulance List</h1>
         </div>
         <Button onClick={openRegister} className="gap-2">
           <Plus className="h-4 w-4" /> Add New Ambulance Register
