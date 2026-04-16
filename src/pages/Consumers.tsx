@@ -155,7 +155,6 @@ const Consumers = () => {
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Guardian Name</th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Mobile</th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Relationship</th>
-                    <th className="text-center px-4 py-3 font-semibold text-foreground">Status</th>
                     <th className="text-center px-4 py-3 font-semibold text-foreground">Action</th>
                   </tr>
                 </thead>
@@ -166,9 +165,6 @@ const Consumers = () => {
                       <td className="px-4 py-3 font-medium text-foreground">{p.guardianName}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.mobile}</td>
                       <td className="px-4 py-3 text-muted-foreground">{p.relationship}</td>
-                      <td className="px-4 py-3 text-center">
-                        <Badge variant={statusColor(p.status)} className="text-xs">{p.status}</Badge>
-                      </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(p)}>
@@ -183,7 +179,7 @@ const Consumers = () => {
                   ))}
                   {paginatedData.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
+                      <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
                         {searchQuery ? "No patients found." : "No patients registered yet."}
                       </td>
                     </tr>
