@@ -29,22 +29,27 @@ const barData = [
   { district: "Manikganj", beds: 75 },
 ];
 
-const summaryData = [
-  { metric: "Total Registered NICU Beds", value: 1240 },
-  { metric: "Total Occupied", value: 898 },
-  { metric: "Total Empty", value: 342 },
+const hospitalReportData = [
+  { hospital: "Dhaka Medical College", division: "Dhaka", district: "Dhaka", registered: 120, occupied: 98, available: 22 },
+  { hospital: "Gazipur General Hospital", division: "Dhaka", district: "Gazipur", registered: 80, occupied: 55, available: 25 },
+  { hospital: "Tangail Sadar Hospital", division: "Dhaka", district: "Tangail", registered: 60, occupied: 42, available: 18 },
+  { hospital: "Mymensingh Medical College", division: "Mymensingh", district: "Mymensingh", registered: 100, occupied: 78, available: 22 },
+  { hospital: "Narsingdi District Hospital", division: "Dhaka", district: "Narsingdi", registered: 45, occupied: 30, available: 15 },
+  { hospital: "Manikganj General Hospital", division: "Dhaka", district: "Manikganj", registered: 35, occupied: 20, available: 15 },
 ];
 
 const Reports = () => {
-  const handleExportExcel = () => {
-    const headers = ["Metric", "Value"];
-    const rows = summaryData.map((r) => [r.metric, r.value]);
+  const handleExportTotalReport = () => {
+    const headers = ["SN", "Hospital Name", "Division", "District", "Total Registered NICU Beds", "Total Occupied Beds", "Available Beds"];
+    const rows = hospitalReportData.map((r, i) => [
+      i + 1, r.hospital, r.division, r.district, r.registered, r.occupied, r.available,
+    ]);
     const csvContent = [headers, ...rows].map((r) => r.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "NICU_Summary_Report.csv";
+    a.download = "NICU_Total_Report.csv";
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -102,28 +107,40 @@ const Reports = () => {
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle className="text-base">Summary Reports</CardTitle>
-          <Button onClick={handleExportExcel} variant="outline" size="sm" className="gap-2">
-            <Download className="h-4 w-4" /> Export Report
+          <Button onClick={handleExportTotalReport} variant="outline" size="sm" className="gap-2">
+            <Download className="h-4 w-4" /> Export Total Report
           </Button>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border border-border overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-muted">
-                <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">Metric</th>
-                  <th className="text-right px-4 py-3 font-semibold text-foreground">Value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {summaryData.map((row) => (
-                  <tr key={row.metric} className="border-t border-border">
-                    <td className="px-4 py-3 text-foreground">{row.metric}</td>
-                    <td className="px-4 py-3 text-right font-semibold text-foreground">{row.value.toLocaleString()}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground w-12">SN.</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Hospital Name</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Division</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">District</th>
+                    <th className="text-right px-4 py-3 font-semibold text-foreground">Registered Beds</th>
+                    <th className="text-right px-4 py-3 font-semibold text-foreground">Occupied Beds</th>
+                    <th className="text-right px-4 py-3 font-semibold text-foreground">Available Beds</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {hospitalReportData.map((row, idx) => (
+                    <tr key={idx} className="border-t border-border hover:bg-muted/40 transition-colors">
+                      <td className="px-4 py-3 text-muted-foreground">{idx + 1}</td>
+                      <td className="px-4 py-3 font-medium text-foreground">{row.hospital}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{row.division}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{row.district}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-foreground">{row.registered}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-foreground">{row.occupied}</td>
+                      <td className="px-4 py-3 text-right font-semibold text-foreground">{row.available}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         </CardContent>
       </Card>

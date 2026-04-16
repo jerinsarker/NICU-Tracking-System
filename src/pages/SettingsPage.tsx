@@ -155,10 +155,11 @@ const SettingsPage = () => {
     }
   };
 
-  const toggleUserStatus = (id: string) => {
+  const changeUserStatus = (id: string, newStatus: "Active" | "Suspended") => {
     setUsers((prev) =>
-      prev.map((u) => (u.id === id ? { ...u, status: u.status === "Active" ? "Suspended" : "Active" } : u))
+      prev.map((u) => (u.id === id ? { ...u, status: newStatus } : u))
     );
+    toast.success(`User status changed to ${newStatus}`);
   };
 
   // Role permission toggle
@@ -277,13 +278,15 @@ const SettingsPage = () => {
                             </Badge>
                           </td>
                           <td className="px-4 py-3 text-center">
-                            <Badge
-                              variant={u.status === "Active" ? "default" : "destructive"}
-                              className="cursor-pointer text-xs"
-                              onClick={() => toggleUserStatus(u.id)}
-                            >
-                              {u.status}
-                            </Badge>
+                            <Select value={u.status} onValueChange={(val) => changeUserStatus(u.id, val as "Active" | "Suspended")}>
+                              <SelectTrigger className="h-8 w-28 mx-auto text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="Active">Active</SelectItem>
+                                <SelectItem value="Suspended">Inactive</SelectItem>
+                              </SelectContent>
+                            </Select>
                           </td>
                           <td className="px-4 py-3 text-center">
                             <div className="flex items-center justify-center gap-1">
