@@ -278,7 +278,7 @@ const Hospitals = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Building2 className="h-7 w-7 text-primary" />
-          <h1 className="page-header">Hospitals</h1>
+          <h1 className="page-header">Hospitals List</h1>
         </div>
         <Button onClick={openRegister} className="gap-2">
           <Plus className="h-4 w-4" /> Add New Hospital Register
@@ -387,7 +387,9 @@ const Hospitals = () => {
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="space-y-3">
+              <Label className="text-sm font-semibold">Location</Label>
+              <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Division *</Label>
                 <Select value={formDivision} onValueChange={(v) => { setFormDivision(v); setFormDistrict(""); }}>
@@ -414,6 +416,7 @@ const Hospitals = () => {
                   </SelectContent>
                 </Select>
               </div>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -434,20 +437,31 @@ const Hospitals = () => {
               <div className="space-y-4 p-4 rounded-lg bg-accent/50 border border-border">
                 {!editingHospital ? (
                   <>
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Upload className="h-4 w-4 text-muted-foreground" />
-                        Upload NICU Bed Pictures
-                      </Label>
-                      <div className="flex gap-3">
-                        <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">Bed 1 Photo</div>
-                        <div className="flex-1 border-2 border-dashed border-border rounded-lg p-4 text-center text-sm text-muted-foreground hover:border-primary/40 cursor-pointer transition-colors">Bed 2 Photo</div>
-                      </div>
-                    </div>
                     <div className="space-y-2 max-w-xs">
                       <Label>Total NICU Beds</Label>
                       <Input type="number" min={1} value={formTotalBeds} onChange={(e) => setFormTotalBeds(Number(e.target.value))} />
                     </div>
+                    {formTotalBeds > 0 && (
+                      <div className="space-y-2">
+                        <Label className="flex items-center gap-2">
+                          <QrCode className="h-4 w-4 text-primary" />
+                          QR Codes will be generated for {formTotalBeds} bed(s)
+                        </Label>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                          {Array.from({ length: Math.min(formTotalBeds, 10) }, (_, i) => (
+                            <div key={i} className="flex flex-col items-center gap-1 p-2 rounded-lg border border-border bg-card">
+                              <QrCode className="h-8 w-8 text-primary/60" />
+                              <span className="text-[10px] font-semibold text-muted-foreground">NICU-{String(i + 1).padStart(2, "0")}</span>
+                            </div>
+                          ))}
+                          {formTotalBeds > 10 && (
+                            <div className="flex items-center justify-center p-2 rounded-lg border border-dashed border-border text-xs text-muted-foreground">
+                              +{formTotalBeds - 10} more
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )
                   </>
                 ) : (
                   <div className="space-y-4">

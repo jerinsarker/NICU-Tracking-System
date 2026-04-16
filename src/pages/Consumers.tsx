@@ -130,7 +130,7 @@ const Consumers = () => {
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <Users className="h-7 w-7 text-primary" />
-          <h1 className="page-header">Patient</h1>
+          <h1 className="page-header">Patient List</h1>
         </div>
         <Button onClick={openRegister} className="gap-2">
           <Plus className="h-4 w-4" /> New Patient Register
