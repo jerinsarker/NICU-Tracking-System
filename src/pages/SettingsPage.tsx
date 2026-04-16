@@ -264,7 +264,7 @@ const SettingsPage = () => {
                         <th className="text-left px-4 py-3 font-semibold text-foreground">Email</th>
                         <th className="text-left px-4 py-3 font-semibold text-foreground">Role</th>
                         <th className="text-center px-4 py-3 font-semibold text-foreground">Status</th>
-                        <th className="text-center px-4 py-3 font-semibold text-foreground">Actions</th>
+                        
                       </tr>
                     </thead>
                     <tbody>
@@ -287,16 +287,6 @@ const SettingsPage = () => {
                                 <SelectItem value="Suspended">Inactive</SelectItem>
                               </SelectContent>
                             </Select>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <div className="flex items-center justify-center gap-1">
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEditUser(u)}>
-                                <Pencil className="h-4 w-4 text-primary" />
-                              </Button>
-                              <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDeleteUserId(u.id)}>
-                                <Trash2 className="h-4 w-4 text-destructive" />
-                              </Button>
-                            </div>
                           </td>
                         </tr>
                       ))}
