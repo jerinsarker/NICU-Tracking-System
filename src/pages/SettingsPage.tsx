@@ -340,8 +340,8 @@ const SettingsPage = () => {
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary" /> Role & Access Permissions
                 </CardTitle>
-                <div className="flex gap-2">
-                  {availableRoles.map((role) => (
+                <div className="flex gap-2 items-center">
+                  {rolesList.map((role) => (
                     <Badge
                       key={role}
                       variant={selectedRole === role ? "default" : "outline"}
@@ -351,6 +351,9 @@ const SettingsPage = () => {
                       {role}
                     </Badge>
                   ))}
+                  <Button size="sm" className="gap-1.5 ml-2" onClick={() => setNewRoleModal(true)}>
+                    <Plus className="h-3.5 w-3.5" /> New Role
+                  </Button>
                 </div>
               </div>
             </CardHeader>
