@@ -124,6 +124,9 @@ const Hospitals = () => {
   const [formNicu, setFormNicu] = useState("yes");
   const [formTotalBeds, setFormTotalBeds] = useState(1);
 
+  // Bed photo upload
+  const [bedPhotos, setBedPhotos] = useState<string[]>([]);
+
   // Bed management in edit mode
   const [newBedCount, setNewBedCount] = useState(1);
   const [deleteBedId, setDeleteBedId] = useState<string | null>(null);
@@ -151,7 +154,21 @@ const Hospitals = () => {
     setFormPhone("+880");
     setFormNicu("yes");
     setFormTotalBeds(1);
+    setBedPhotos([]);
     setRegisterModal(true);
+  };
+
+  const handleBedPhotosChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const readers = files.map(
+      (f) =>
+        new Promise<string>((resolve) => {
+          const r = new FileReader();
+          r.onload = () => resolve(r.result as string);
+          r.readAsDataURL(f);
+        })
+    );
+    Promise.all(readers).then((results) => setBedPhotos((prev) => [...prev, ...results]));
   };
 
   const openEdit = (h: Hospital) => {
@@ -437,6 +454,29 @@ const Hospitals = () => {
               <div className="space-y-4 p-4 rounded-lg bg-accent/50 border border-border">
                 {!editingHospital ? (
                   <>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-2">
+                        <Upload className="h-4 w-4 text-primary" />
+                        NICU Beds Picture Upload
+                      </Label>
+                      <Input type="file" accept="image/*" multiple onChange={handleBedPhotosChange} />
+                      {bedPhotos.length > 0 && (
+                        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 mt-2">
+                          {bedPhotos.map((src, i) => (
+                            <div key={i} className="relative group">
+                              <img src={src} alt={`NICU bed ${i + 1}`} className="h-20 w-full object-cover rounded-lg border border-border" />
+                              <button
+                                type="button"
+                                onClick={() => setBedPhotos((prev) => prev.filter((_, idx) => idx !== i))}
+                                className="absolute top-1 right-1 bg-destructive text-destructive-foreground rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                     <div className="space-y-2 max-w-xs">
                       <Label>Total NICU Beds</Label>
                       <Input type="number" min={1} value={formTotalBeds} onChange={(e) => setFormTotalBeds(Number(e.target.value))} />

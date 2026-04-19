@@ -116,7 +116,12 @@ const SettingsPage = () => {
   const [userModal, setUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
-  const [userForm, setUserForm] = useState({ name: "", email: "", phone: "", password: "", role: "" });
+  const [userForm, setUserForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "", role: "" });
+
+  // New Role modal
+  const [newRoleModal, setNewRoleModal] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [rolesList, setRolesList] = useState<string[]>(availableRoles);
 
   // Role & Access
   const [rolePerms, setRolePerms] = useState<Record<string, RolePermissions>>(defaultRolePermissions);
@@ -131,20 +136,42 @@ const SettingsPage = () => {
   // User handlers
   const openEditUser = (u: SystemUser) => {
     setEditingUser(u);
-    setUserForm({ name: u.name, email: u.email, phone: u.phone, password: "", role: u.role });
+    setUserForm({ name: u.name, email: u.email, phone: u.phone, password: "", confirmPassword: "", role: u.role });
     setUserModal(true);
   };
 
   const saveUser = () => {
-    if (!userForm.name || !userForm.email || !userForm.role) {
-      toast.error("Please fill Name, Email, and Role");
+    if (!userForm.phone || !userForm.role) {
+      toast.error("Please fill Phone/Username and Role");
+      return;
+    }
+    if (userForm.password && userForm.password !== userForm.confirmPassword) {
+      toast.error("Passwords do not match");
       return;
     }
     if (editingUser) {
-      setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? { ...u, ...userForm, status: u.status } : u)));
-      toast.success("User updated successfully!");
+      setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? { ...u, name: userForm.name, email: userForm.email, phone: userForm.phone, role: userForm.role, status: u.status } : u)));
+      toast.success("Profile updated successfully!");
     }
     setUserModal(false);
+  };
+
+  const addNewRole = () => {
+    const name = newRoleName.trim();
+    if (!name) { toast.error("Role name required"); return; }
+    if (rolesList.includes(name)) { toast.error("Role already exists"); return; }
+    setRolesList((prev) => [...prev, name]);
+    setRolePerms((prev) => ({
+      ...prev,
+      [name]: modules.reduce((acc, m) => {
+        acc[m] = { View: false, Create: false, Update: false, Delete: false };
+        return acc;
+      }, {} as RolePermissions),
+    }));
+    setSelectedRole(name);
+    setNewRoleName("");
+    setNewRoleModal(false);
+    toast.success(`Role "${name}" created!`);
   };
 
   const confirmDeleteUser = () => {
@@ -260,18 +287,20 @@ const SettingsPage = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-muted">
                       <tr>
+                        <th className="text-left px-4 py-3 font-semibold text-foreground w-12">SN.</th>
                         <th className="text-left px-4 py-3 font-semibold text-foreground">Name</th>
-                        <th className="text-left px-4 py-3 font-semibold text-foreground">Email</th>
+                        <th className="text-left px-4 py-3 font-semibold text-foreground">Mobile No</th>
                         <th className="text-left px-4 py-3 font-semibold text-foreground">Role</th>
                         <th className="text-center px-4 py-3 font-semibold text-foreground">Status</th>
-                        
+                        <th className="text-center px-4 py-3 font-semibold text-foreground">Manage Profile</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {users.map((u) => (
+                      {users.map((u, idx) => (
                         <tr key={u.id} className="border-t border-border hover:bg-muted/40 transition-colors">
+                          <td className="px-4 py-3 text-muted-foreground">{idx + 1}</td>
                           <td className="px-4 py-3 font-medium text-foreground">{u.name}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{u.phone}</td>
                           <td className="px-4 py-3">
                             <Badge className={`text-xs ${roleColorMap[u.role] ?? "bg-muted text-muted-foreground"}`}>
                               {u.role}
@@ -287,6 +316,11 @@ const SettingsPage = () => {
                                 <SelectItem value="Suspended">Inactive</SelectItem>
                               </SelectContent>
                             </Select>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => openEditUser(u)}>
+                              <Pencil className="h-3.5 w-3.5" /> Edit Profile
+                            </Button>
                           </td>
                         </tr>
                       ))}
@@ -306,8 +340,8 @@ const SettingsPage = () => {
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary" /> Role & Access Permissions
                 </CardTitle>
-                <div className="flex gap-2">
-                  {availableRoles.map((role) => (
+                <div className="flex gap-2 items-center">
+                  {rolesList.map((role) => (
                     <Badge
                       key={role}
                       variant={selectedRole === role ? "default" : "outline"}
@@ -317,6 +351,9 @@ const SettingsPage = () => {
                       {role}
                     </Badge>
                   ))}
+                  <Button size="sm" className="gap-1.5 ml-2" onClick={() => setNewRoleModal(true)}>
+                    <Plus className="h-3.5 w-3.5" /> New Role
+                  </Button>
                 </div>
               </div>
             </CardHeader>
@@ -443,36 +480,32 @@ const SettingsPage = () => {
       <Dialog open={userModal} onOpenChange={setUserModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>Update this user's information and role.</DialogDescription>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>Update phone/username, password, and role.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>{getNameLabel()}</Label>
-              <Input value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} placeholder={getNamePlaceholder()} />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} placeholder="user@hospital.gov.bd" />
+              <Label>Phone / Username *</Label>
+              <Input value={userForm.phone} onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })} placeholder="+880-1XXX-XXXXXX" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input value={userForm.phone} onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })} placeholder="+880-1XXX-XXXXXX" />
+                <Label>Password</Label>
+                <Input type="password" value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} placeholder="••••••" />
               </div>
               <div className="space-y-2">
-                <Label>Password <span className="text-muted-foreground text-xs">(leave blank to keep)</span></Label>
-                <Input type="password" value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} placeholder="••••••" />
+                <Label>Confirm Password</Label>
+                <Input type="password" value={userForm.confirmPassword} onChange={(e) => setUserForm({ ...userForm, confirmPassword: e.target.value })} placeholder="••••••" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Select Role</Label>
+              <Label>Select Role *</Label>
               <Select value={userForm.role} onValueChange={(val) => setUserForm({ ...userForm, role: val })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableRoles.map((r) => (
+                  {rolesList.map((r) => (
                     <SelectItem key={r} value={r}>{r}</SelectItem>
                   ))}
                 </SelectContent>
@@ -481,7 +514,32 @@ const SettingsPage = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUserModal(false)}>Cancel</Button>
-            <Button onClick={saveUser}>Update User</Button>
+            <Button onClick={saveUser}>Update Profile</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Role Modal */}
+      <Dialog open={newRoleModal} onOpenChange={setNewRoleModal}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Create New Role</DialogTitle>
+            <DialogDescription>Add a new role. You can configure permissions after creation.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label>Role Name *</Label>
+            <Input
+              value={newRoleName}
+              onChange={(e) => setNewRoleName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addNewRole()}
+              placeholder="e.g. Supervisor"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewRoleModal(false)}>Cancel</Button>
+            <Button onClick={addNewRole} className="gap-1.5">
+              <Plus className="h-4 w-4" /> Create Role
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
