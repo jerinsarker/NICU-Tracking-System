@@ -116,7 +116,12 @@ const SettingsPage = () => {
   const [userModal, setUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState<SystemUser | null>(null);
   const [deleteUserId, setDeleteUserId] = useState<string | null>(null);
-  const [userForm, setUserForm] = useState({ name: "", email: "", phone: "", password: "", role: "" });
+  const [userForm, setUserForm] = useState({ name: "", email: "", phone: "", password: "", confirmPassword: "", role: "" });
+
+  // New Role modal
+  const [newRoleModal, setNewRoleModal] = useState(false);
+  const [newRoleName, setNewRoleName] = useState("");
+  const [rolesList, setRolesList] = useState<string[]>(availableRoles);
 
   // Role & Access
   const [rolePerms, setRolePerms] = useState<Record<string, RolePermissions>>(defaultRolePermissions);
@@ -131,20 +136,42 @@ const SettingsPage = () => {
   // User handlers
   const openEditUser = (u: SystemUser) => {
     setEditingUser(u);
-    setUserForm({ name: u.name, email: u.email, phone: u.phone, password: "", role: u.role });
+    setUserForm({ name: u.name, email: u.email, phone: u.phone, password: "", confirmPassword: "", role: u.role });
     setUserModal(true);
   };
 
   const saveUser = () => {
-    if (!userForm.name || !userForm.email || !userForm.role) {
-      toast.error("Please fill Name, Email, and Role");
+    if (!userForm.phone || !userForm.role) {
+      toast.error("Please fill Phone/Username and Role");
+      return;
+    }
+    if (userForm.password && userForm.password !== userForm.confirmPassword) {
+      toast.error("Passwords do not match");
       return;
     }
     if (editingUser) {
-      setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? { ...u, ...userForm, status: u.status } : u)));
-      toast.success("User updated successfully!");
+      setUsers((prev) => prev.map((u) => (u.id === editingUser.id ? { ...u, name: userForm.name, email: userForm.email, phone: userForm.phone, role: userForm.role, status: u.status } : u)));
+      toast.success("Profile updated successfully!");
     }
     setUserModal(false);
+  };
+
+  const addNewRole = () => {
+    const name = newRoleName.trim();
+    if (!name) { toast.error("Role name required"); return; }
+    if (rolesList.includes(name)) { toast.error("Role already exists"); return; }
+    setRolesList((prev) => [...prev, name]);
+    setRolePerms((prev) => ({
+      ...prev,
+      [name]: modules.reduce((acc, m) => {
+        acc[m] = { View: false, Create: false, Update: false, Delete: false };
+        return acc;
+      }, {} as RolePermissions),
+    }));
+    setSelectedRole(name);
+    setNewRoleName("");
+    setNewRoleModal(false);
+    toast.success(`Role "${name}" created!`);
   };
 
   const confirmDeleteUser = () => {
@@ -260,18 +287,20 @@ const SettingsPage = () => {
                   <table className="w-full text-sm">
                     <thead className="bg-muted">
                       <tr>
+                        <th className="text-left px-4 py-3 font-semibold text-foreground w-12">SN.</th>
                         <th className="text-left px-4 py-3 font-semibold text-foreground">Name</th>
-                        <th className="text-left px-4 py-3 font-semibold text-foreground">Email</th>
+                        <th className="text-left px-4 py-3 font-semibold text-foreground">Mobile No</th>
                         <th className="text-left px-4 py-3 font-semibold text-foreground">Role</th>
                         <th className="text-center px-4 py-3 font-semibold text-foreground">Status</th>
-                        
+                        <th className="text-center px-4 py-3 font-semibold text-foreground">Manage Profile</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {users.map((u) => (
+                      {users.map((u, idx) => (
                         <tr key={u.id} className="border-t border-border hover:bg-muted/40 transition-colors">
+                          <td className="px-4 py-3 text-muted-foreground">{idx + 1}</td>
                           <td className="px-4 py-3 font-medium text-foreground">{u.name}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{u.email}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{u.phone}</td>
                           <td className="px-4 py-3">
                             <Badge className={`text-xs ${roleColorMap[u.role] ?? "bg-muted text-muted-foreground"}`}>
                               {u.role}
@@ -287,6 +316,11 @@ const SettingsPage = () => {
                                 <SelectItem value="Suspended">Inactive</SelectItem>
                               </SelectContent>
                             </Select>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <Button size="sm" variant="outline" className="gap-1.5" onClick={() => openEditUser(u)}>
+                              <Pencil className="h-3.5 w-3.5" /> Edit Profile
+                            </Button>
                           </td>
                         </tr>
                       ))}
