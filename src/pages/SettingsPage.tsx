@@ -480,36 +480,32 @@ const SettingsPage = () => {
       <Dialog open={userModal} onOpenChange={setUserModal}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
-            <DialogDescription>Update this user's information and role.</DialogDescription>
+            <DialogTitle>Edit Profile</DialogTitle>
+            <DialogDescription>Update phone/username, password, and role.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
             <div className="space-y-2">
-              <Label>{getNameLabel()}</Label>
-              <Input value={userForm.name} onChange={(e) => setUserForm({ ...userForm, name: e.target.value })} placeholder={getNamePlaceholder()} />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input type="email" value={userForm.email} onChange={(e) => setUserForm({ ...userForm, email: e.target.value })} placeholder="user@hospital.gov.bd" />
+              <Label>Phone / Username *</Label>
+              <Input value={userForm.phone} onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })} placeholder="+880-1XXX-XXXXXX" />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
-                <Label>Phone</Label>
-                <Input value={userForm.phone} onChange={(e) => setUserForm({ ...userForm, phone: e.target.value })} placeholder="+880-1XXX-XXXXXX" />
+                <Label>Password</Label>
+                <Input type="password" value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} placeholder="••••••" />
               </div>
               <div className="space-y-2">
-                <Label>Password <span className="text-muted-foreground text-xs">(leave blank to keep)</span></Label>
-                <Input type="password" value={userForm.password} onChange={(e) => setUserForm({ ...userForm, password: e.target.value })} placeholder="••••••" />
+                <Label>Confirm Password</Label>
+                <Input type="password" value={userForm.confirmPassword} onChange={(e) => setUserForm({ ...userForm, confirmPassword: e.target.value })} placeholder="••••••" />
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Select Role</Label>
+              <Label>Select Role *</Label>
               <Select value={userForm.role} onValueChange={(val) => setUserForm({ ...userForm, role: val })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Choose a role" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableRoles.map((r) => (
+                  {rolesList.map((r) => (
                     <SelectItem key={r} value={r}>{r}</SelectItem>
                   ))}
                 </SelectContent>
@@ -518,7 +514,32 @@ const SettingsPage = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setUserModal(false)}>Cancel</Button>
-            <Button onClick={saveUser}>Update User</Button>
+            <Button onClick={saveUser}>Update Profile</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Role Modal */}
+      <Dialog open={newRoleModal} onOpenChange={setNewRoleModal}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Create New Role</DialogTitle>
+            <DialogDescription>Add a new role. You can configure permissions after creation.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label>Role Name *</Label>
+            <Input
+              value={newRoleName}
+              onChange={(e) => setNewRoleName(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && addNewRole()}
+              placeholder="e.g. Supervisor"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewRoleModal(false)}>Cancel</Button>
+            <Button onClick={addNewRole} className="gap-1.5">
+              <Plus className="h-4 w-4" /> Create Role
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
