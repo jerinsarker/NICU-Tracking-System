@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Ambulance, Plus, Pencil, Trash2, Upload } from "lucide-react";
+import { Ambulance, Plus, Pencil, Trash2, Upload, Phone, Search, Filter, X as XIcon, User, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ListSearchBar, ListPagination, useListPagination } from "@/components/ListSearchPagination";
 
@@ -86,14 +86,50 @@ const Ambulances = () => {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filterFn = (a: AmbulanceRecord, q: string) =>
-    a.ownerName.toLowerCase().includes(q) ||
-    a.contactNumber.toLowerCase().includes(q) ||
-    a.regNumber.toLowerCase().includes(q);
+  // Advanced search filters (Super Admin)
+  const [filterDivision, setFilterDivision] = useState<string>("all");
+  const [filterDistrict, setFilterDistrict] = useState<string>("all");
+  const [filterNicu, setFilterNicu] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  // Contact info modal (after selecting an ambulance)
+  const [contactAmb, setContactAmb] = useState<AmbulanceRecord | null>(null);
+
+  const filterDistrictOptions = filterDivision !== "all" ? divisionDistricts[filterDivision] || [] : [];
+
+  const resetFilters = () => {
+    setFilterDivision("all");
+    setFilterDistrict("all");
+    setFilterNicu("all");
+    setFilterStatus("all");
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  const filterFn = (a: AmbulanceRecord, q: string) => {
+    if (filterDivision !== "all" && a.division !== filterDivision) return false;
+    if (filterDistrict !== "all" && a.district !== filterDistrict) return false;
+    if (filterNicu === "yes" && !a.nicuFacility) return false;
+    if (filterNicu === "no" && a.nicuFacility) return false;
+    if (filterStatus !== "all" && a.status !== filterStatus) return false;
+    if (!q) return true;
+    return (
+      a.ownerName.toLowerCase().includes(q) ||
+      a.contactNumber.toLowerCase().includes(q) ||
+      a.regNumber.toLowerCase().includes(q) ||
+      a.driverName.toLowerCase().includes(q)
+    );
+  };
 
   const { paginatedData, totalPages, safePage, startIndex, filtered } = useListPagination(
     ambulances, searchQuery, filterFn, pageSize, currentPage
   );
+
+  const activeFilterCount =
+    (filterDivision !== "all" ? 1 : 0) +
+    (filterDistrict !== "all" ? 1 : 0) +
+    (filterNicu !== "all" ? 1 : 0) +
+    (filterStatus !== "all" ? 1 : 0);
 
   const openRegister = () => {
     setEditingAmb(null);
