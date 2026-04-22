@@ -492,6 +492,89 @@ const Ambulances = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Contact Info Modal — shown after Super Admin selects an ambulance */}
+      <Dialog open={!!contactAmb} onOpenChange={(open) => !open && setContactAmb(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Phone className="h-5 w-5 text-primary" /> Ambulance Contact Info
+            </DialogTitle>
+          </DialogHeader>
+          {contactAmb && (
+            <div className="space-y-4 pt-2">
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Owner / Agency</div>
+                    <div className="font-semibold text-foreground">{contactAmb.ownerName}</div>
+                    <div className="text-xs text-muted-foreground capitalize mt-0.5">{contactAmb.ownershipType}</div>
+                  </div>
+                  <div className="flex flex-col gap-1 items-end">
+                    {contactAmb.nicuFacility && (
+                      <Badge className="text-xs gap-1"><BadgeCheck className="h-3 w-3" /> NICU</Badge>
+                    )}
+                    <Badge variant={contactAmb.status === "Active" ? "default" : "secondary"} className="text-xs">
+                      {contactAmb.status}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t border-border">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Reg. Number</div>
+                    <div className="font-medium text-foreground">{contactAmb.regNumber}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Vehicle</div>
+                    <div className="font-medium text-foreground">{contactAmb.vehicleName || "—"}</div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-xs text-muted-foreground">Service Area</div>
+                    <div className="font-medium text-foreground">{contactAmb.district}, {contactAmb.division}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Owner contact */}
+              <div className="rounded-lg border border-border p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Owner Contact</div>
+                    <div className="font-medium text-foreground">{contactAmb.contactNumber}</div>
+                  </div>
+                </div>
+                <Button asChild size="sm" className="gap-1.5">
+                  <a href={`tel:${contactAmb.contactNumber}`}>
+                    <Phone className="h-3.5 w-3.5" /> Call
+                  </a>
+                </Button>
+              </div>
+
+              {/* Driver contact */}
+              <div className="rounded-lg border border-border p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Ambulance className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Driver — {contactAmb.driverName}</div>
+                    <div className="font-medium text-foreground">{contactAmb.driverContact || "—"}</div>
+                  </div>
+                </div>
+                <Button asChild size="sm" variant="outline" className="gap-1.5" disabled={!contactAmb.driverContact}>
+                  <a href={`tel:${contactAmb.driverContact}`}>
+                    <Phone className="h-3.5 w-3.5" /> Call
+                  </a>
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
