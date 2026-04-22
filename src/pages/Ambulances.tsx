@@ -331,6 +331,9 @@ const Ambulances = () => {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
+                          <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => setContactAmb(a)}>
+                            <Phone className="h-3.5 w-3.5 text-primary" /> Contact
+                          </Button>
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(a)}>
                             <Pencil className="h-4 w-4 text-primary" />
                           </Button>
@@ -344,7 +347,7 @@ const Ambulances = () => {
                   {paginatedData.length === 0 && (
                     <tr>
                       <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
-                        {searchQuery ? "No ambulances found." : "No ambulances registered yet."}
+                        {(searchQuery || activeFilterCount > 0) ? "No ambulances match your filters. Try adjusting or clearing them." : "No ambulances registered yet."}
                       </td>
                     </tr>
                   )}
