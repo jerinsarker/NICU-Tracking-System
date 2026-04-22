@@ -135,6 +135,37 @@ const SettingsPage = () => {
   const [newDistrict, setNewDistrict] = useState("");
   const [selectedDivision, setSelectedDivision] = useState<string>(Object.keys(defaultDivisionDistricts)[0]);
 
+  // My Profile (logged-in admin)
+  const [myProfile, setMyProfile] = useState({
+    phone: "+880-1711-000001",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const saveMyProfile = () => {
+    if (!myProfile.phone.trim()) {
+      toast.error("Phone number is required");
+      return;
+    }
+    if (myProfile.newPassword || myProfile.currentPassword || myProfile.confirmPassword) {
+      if (!myProfile.currentPassword) {
+        toast.error("Please enter your current password");
+        return;
+      }
+      if (myProfile.newPassword.length < 6) {
+        toast.error("New password must be at least 6 characters");
+        return;
+      }
+      if (myProfile.newPassword !== myProfile.confirmPassword) {
+        toast.error("New password and confirm password do not match");
+        return;
+      }
+    }
+    toast.success("My Profile updated successfully!");
+    setMyProfile((p) => ({ ...p, currentPassword: "", newPassword: "", confirmPassword: "" }));
+  };
+
   // User handlers
   const openEditUser = (u: SystemUser) => {
     setEditingUser(u);
