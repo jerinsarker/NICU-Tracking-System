@@ -294,7 +294,7 @@ const SettingsPage = () => {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full max-w-lg grid-cols-3 h-11">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4 h-11">
           <TabsTrigger value="users" className="gap-1.5 text-xs sm:text-sm">
             <Users className="h-4 w-4" /> Users
           </TabsTrigger>
@@ -303,6 +303,9 @@ const SettingsPage = () => {
           </TabsTrigger>
           <TabsTrigger value="system" className="gap-1.5 text-xs sm:text-sm">
             <MapPin className="h-4 w-4" /> System
+          </TabsTrigger>
+          <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm">
+            <UserCircle className="h-4 w-4" /> My Profile
           </TabsTrigger>
         </TabsList>
 
