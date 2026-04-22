@@ -220,12 +220,81 @@ const Ambulances = () => {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="mb-4">
+          {/* Advanced Search & Filter Bar (Super Admin) */}
+          <div className="mb-4 space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Filter className="h-4 w-4 text-primary" />
+                Search & Filter Ambulance
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-xs">{activeFilterCount} active</Badge>
+                )}
+              </div>
+              {(activeFilterCount > 0 || searchQuery) && (
+                <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={resetFilters}>
+                  <XIcon className="h-3.5 w-3.5" /> Clear all
+                </Button>
+              )}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Division</Label>
+                <Select value={filterDivision} onValueChange={(v) => { setFilterDivision(v); setFilterDistrict("all"); setCurrentPage(1); }}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Divisions</SelectItem>
+                    {Object.keys(divisionDistricts).map((d) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">District</Label>
+                <Select value={filterDistrict} onValueChange={(v) => { setFilterDistrict(v); setCurrentPage(1); }} disabled={filterDivision === "all"}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All Districts" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Districts</SelectItem>
+                    {filterDistrictOptions.map((d) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">NICU Facility</Label>
+                <Select value={filterNicu} onValueChange={(v) => { setFilterNicu(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="yes">NICU Equipped</SelectItem>
+                    <SelectItem value="no">No NICU</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Status</Label>
+                <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <ListSearchBar
               searchQuery={searchQuery}
               onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
-              searchPlaceholder="Search by owner name, contact or reg number..."
+              searchPlaceholder="Search by owner/agency, driver, contact or reg number..."
             />
+
+            <div className="text-xs text-muted-foreground">
+              Showing <span className="font-semibold text-foreground">{filtered.length}</span> of {ambulances.length} ambulances
+            </div>
           </div>
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="overflow-x-auto">
