@@ -41,6 +41,8 @@ import {
   MapPin,
   Plus,
   Shield,
+  UserCircle,
+  KeyRound,
 } from "lucide-react";
 
 interface SystemUser {
