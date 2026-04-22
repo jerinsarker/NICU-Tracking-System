@@ -510,6 +510,72 @@ const SettingsPage = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* TAB 4 — MY PROFILE */}
+        <TabsContent value="profile" className="mt-6">
+          <Card className="max-w-2xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <UserCircle className="h-5 w-5 text-primary" /> My Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <UserCircle className="h-3.5 w-3.5 text-muted-foreground" /> Phone Number
+                </Label>
+                <Input
+                  value={myProfile.phone}
+                  onChange={(e) => setMyProfile({ ...myProfile, phone: e.target.value })}
+                  placeholder="+880-1XXX-XXXXXX"
+                />
+              </div>
+
+              <div className="pt-2 border-t border-border">
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
+                  <KeyRound className="h-4 w-4 text-primary" /> Change Password
+                </h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Current Password</Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter current password"
+                      value={myProfile.currentPassword}
+                      onChange={(e) => setMyProfile({ ...myProfile, currentPassword: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>New Password</Label>
+                      <Input
+                        type="password"
+                        placeholder="Min 6 characters"
+                        value={myProfile.newPassword}
+                        onChange={(e) => setMyProfile({ ...myProfile, newPassword: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Confirm Password</Label>
+                      <Input
+                        type="password"
+                        placeholder="Re-enter new password"
+                        value={myProfile.confirmPassword}
+                        onChange={(e) => setMyProfile({ ...myProfile, confirmPassword: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button onClick={saveMyProfile} className="gap-2">
+                  <UserCircle className="h-4 w-4" /> Update Profile
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
       </Tabs>
 
       {/* Edit User Modal */}
