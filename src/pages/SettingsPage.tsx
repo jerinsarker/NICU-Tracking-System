@@ -41,6 +41,8 @@ import {
   MapPin,
   Plus,
   Shield,
+  UserCircle,
+  KeyRound,
 } from "lucide-react";
 
 interface SystemUser {
@@ -132,6 +134,37 @@ const SettingsPage = () => {
   const [newDivision, setNewDivision] = useState("");
   const [newDistrict, setNewDistrict] = useState("");
   const [selectedDivision, setSelectedDivision] = useState<string>(Object.keys(defaultDivisionDistricts)[0]);
+
+  // My Profile (logged-in admin)
+  const [myProfile, setMyProfile] = useState({
+    phone: "+880-1711-000001",
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+
+  const saveMyProfile = () => {
+    if (!myProfile.phone.trim()) {
+      toast.error("Phone number is required");
+      return;
+    }
+    if (myProfile.newPassword || myProfile.currentPassword || myProfile.confirmPassword) {
+      if (!myProfile.currentPassword) {
+        toast.error("Please enter your current password");
+        return;
+      }
+      if (myProfile.newPassword.length < 6) {
+        toast.error("New password must be at least 6 characters");
+        return;
+      }
+      if (myProfile.newPassword !== myProfile.confirmPassword) {
+        toast.error("New password and confirm password do not match");
+        return;
+      }
+    }
+    toast.success("My Profile updated successfully!");
+    setMyProfile((p) => ({ ...p, currentPassword: "", newPassword: "", confirmPassword: "" }));
+  };
 
   // User handlers
   const openEditUser = (u: SystemUser) => {
@@ -261,7 +294,7 @@ const SettingsPage = () => {
       </div>
 
       <Tabs defaultValue="users" className="w-full">
-        <TabsList className="grid w-full max-w-lg grid-cols-3 h-11">
+        <TabsList className="grid w-full max-w-2xl grid-cols-4 h-11">
           <TabsTrigger value="users" className="gap-1.5 text-xs sm:text-sm">
             <Users className="h-4 w-4" /> Users
           </TabsTrigger>
@@ -270,6 +303,9 @@ const SettingsPage = () => {
           </TabsTrigger>
           <TabsTrigger value="system" className="gap-1.5 text-xs sm:text-sm">
             <MapPin className="h-4 w-4" /> System
+          </TabsTrigger>
+          <TabsTrigger value="profile" className="gap-1.5 text-xs sm:text-sm">
+            <UserCircle className="h-4 w-4" /> My Profile
           </TabsTrigger>
         </TabsList>
 
@@ -471,6 +507,72 @@ const SettingsPage = () => {
                   </div>
                 </div>
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* TAB 4 — MY PROFILE */}
+        <TabsContent value="profile" className="mt-6">
+          <Card className="max-w-2xl">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <UserCircle className="h-5 w-5 text-primary" /> My Profile
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1.5">
+                  <UserCircle className="h-3.5 w-3.5 text-muted-foreground" /> Phone Number
+                </Label>
+                <Input
+                  value={myProfile.phone}
+                  onChange={(e) => setMyProfile({ ...myProfile, phone: e.target.value })}
+                  placeholder="+880-1XXX-XXXXXX"
+                />
+              </div>
+
+              <div className="pt-2 border-t border-border">
+                <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-1.5">
+                  <KeyRound className="h-4 w-4 text-primary" /> Change Password
+                </h3>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Current Password</Label>
+                    <Input
+                      type="password"
+                      placeholder="Enter current password"
+                      value={myProfile.currentPassword}
+                      onChange={(e) => setMyProfile({ ...myProfile, currentPassword: e.target.value })}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label>New Password</Label>
+                      <Input
+                        type="password"
+                        placeholder="Min 6 characters"
+                        value={myProfile.newPassword}
+                        onChange={(e) => setMyProfile({ ...myProfile, newPassword: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Confirm Password</Label>
+                      <Input
+                        type="password"
+                        placeholder="Re-enter new password"
+                        value={myProfile.confirmPassword}
+                        onChange={(e) => setMyProfile({ ...myProfile, confirmPassword: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex justify-end pt-2">
+                <Button onClick={saveMyProfile} className="gap-2">
+                  <UserCircle className="h-4 w-4" /> Update Profile
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
