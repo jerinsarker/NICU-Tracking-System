@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Ambulance, Plus, Pencil, Trash2, Upload } from "lucide-react";
+import { Ambulance, Plus, Pencil, Trash2, Upload, Phone, Search, Filter, X as XIcon, User, BadgeCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ListSearchBar, ListPagination, useListPagination } from "@/components/ListSearchPagination";
 
@@ -86,14 +86,50 @@ const Ambulances = () => {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  const filterFn = (a: AmbulanceRecord, q: string) =>
-    a.ownerName.toLowerCase().includes(q) ||
-    a.contactNumber.toLowerCase().includes(q) ||
-    a.regNumber.toLowerCase().includes(q);
+  // Advanced search filters (Super Admin)
+  const [filterDivision, setFilterDivision] = useState<string>("all");
+  const [filterDistrict, setFilterDistrict] = useState<string>("all");
+  const [filterNicu, setFilterNicu] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+
+  // Contact info modal (after selecting an ambulance)
+  const [contactAmb, setContactAmb] = useState<AmbulanceRecord | null>(null);
+
+  const filterDistrictOptions = filterDivision !== "all" ? divisionDistricts[filterDivision] || [] : [];
+
+  const resetFilters = () => {
+    setFilterDivision("all");
+    setFilterDistrict("all");
+    setFilterNicu("all");
+    setFilterStatus("all");
+    setSearchQuery("");
+    setCurrentPage(1);
+  };
+
+  const filterFn = (a: AmbulanceRecord, q: string) => {
+    if (filterDivision !== "all" && a.division !== filterDivision) return false;
+    if (filterDistrict !== "all" && a.district !== filterDistrict) return false;
+    if (filterNicu === "yes" && !a.nicuFacility) return false;
+    if (filterNicu === "no" && a.nicuFacility) return false;
+    if (filterStatus !== "all" && a.status !== filterStatus) return false;
+    if (!q) return true;
+    return (
+      a.ownerName.toLowerCase().includes(q) ||
+      a.contactNumber.toLowerCase().includes(q) ||
+      a.regNumber.toLowerCase().includes(q) ||
+      a.driverName.toLowerCase().includes(q)
+    );
+  };
 
   const { paginatedData, totalPages, safePage, startIndex, filtered } = useListPagination(
     ambulances, searchQuery, filterFn, pageSize, currentPage
   );
+
+  const activeFilterCount =
+    (filterDivision !== "all" ? 1 : 0) +
+    (filterDistrict !== "all" ? 1 : 0) +
+    (filterNicu !== "all" ? 1 : 0) +
+    (filterStatus !== "all" ? 1 : 0);
 
   const openRegister = () => {
     setEditingAmb(null);
@@ -184,12 +220,81 @@ const Ambulances = () => {
 
       <Card>
         <CardContent className="pt-6">
-          <div className="mb-4">
+          {/* Advanced Search & Filter Bar (Super Admin) */}
+          <div className="mb-4 space-y-3 rounded-lg border border-border bg-muted/30 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Filter className="h-4 w-4 text-primary" />
+                Search & Filter Ambulance
+                {activeFilterCount > 0 && (
+                  <Badge variant="secondary" className="ml-1 text-xs">{activeFilterCount} active</Badge>
+                )}
+              </div>
+              {(activeFilterCount > 0 || searchQuery) && (
+                <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={resetFilters}>
+                  <XIcon className="h-3.5 w-3.5" /> Clear all
+                </Button>
+              )}
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Division</Label>
+                <Select value={filterDivision} onValueChange={(v) => { setFilterDivision(v); setFilterDistrict("all"); setCurrentPage(1); }}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Divisions</SelectItem>
+                    {Object.keys(divisionDistricts).map((d) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">District</Label>
+                <Select value={filterDistrict} onValueChange={(v) => { setFilterDistrict(v); setCurrentPage(1); }} disabled={filterDivision === "all"}>
+                  <SelectTrigger className="h-9"><SelectValue placeholder="All Districts" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Districts</SelectItem>
+                    {filterDistrictOptions.map((d) => (
+                      <SelectItem key={d} value={d}>{d}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">NICU Facility</Label>
+                <Select value={filterNicu} onValueChange={(v) => { setFilterNicu(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All</SelectItem>
+                    <SelectItem value="yes">NICU Equipped</SelectItem>
+                    <SelectItem value="no">No NICU</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">Status</Label>
+                <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="Active">Active</SelectItem>
+                    <SelectItem value="Inactive">Inactive</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <ListSearchBar
               searchQuery={searchQuery}
               onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
-              searchPlaceholder="Search by owner name, contact or reg number..."
+              searchPlaceholder="Search by owner/agency, driver, contact or reg number..."
             />
+
+            <div className="text-xs text-muted-foreground">
+              Showing <span className="font-semibold text-foreground">{filtered.length}</span> of {ambulances.length} ambulances
+            </div>
           </div>
           <div className="rounded-lg border border-border overflow-hidden">
             <div className="overflow-x-auto">
@@ -226,6 +331,9 @@ const Ambulances = () => {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
+                          <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => setContactAmb(a)}>
+                            <Phone className="h-3.5 w-3.5 text-primary" /> Contact
+                          </Button>
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(a)}>
                             <Pencil className="h-4 w-4 text-primary" />
                           </Button>
@@ -239,7 +347,7 @@ const Ambulances = () => {
                   {paginatedData.length === 0 && (
                     <tr>
                       <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
-                        {searchQuery ? "No ambulances found." : "No ambulances registered yet."}
+                        {(searchQuery || activeFilterCount > 0) ? "No ambulances match your filters. Try adjusting or clearing them." : "No ambulances registered yet."}
                       </td>
                     </tr>
                   )}
@@ -384,6 +492,89 @@ const Ambulances = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Contact Info Modal — shown after Super Admin selects an ambulance */}
+      <Dialog open={!!contactAmb} onOpenChange={(open) => !open && setContactAmb(null)}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Phone className="h-5 w-5 text-primary" /> Ambulance Contact Info
+            </DialogTitle>
+          </DialogHeader>
+          {contactAmb && (
+            <div className="space-y-4 pt-2">
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Owner / Agency</div>
+                    <div className="font-semibold text-foreground">{contactAmb.ownerName}</div>
+                    <div className="text-xs text-muted-foreground capitalize mt-0.5">{contactAmb.ownershipType}</div>
+                  </div>
+                  <div className="flex flex-col gap-1 items-end">
+                    {contactAmb.nicuFacility && (
+                      <Badge className="text-xs gap-1"><BadgeCheck className="h-3 w-3" /> NICU</Badge>
+                    )}
+                    <Badge variant={contactAmb.status === "Active" ? "default" : "secondary"} className="text-xs">
+                      {contactAmb.status}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 text-sm pt-2 border-t border-border">
+                  <div>
+                    <div className="text-xs text-muted-foreground">Reg. Number</div>
+                    <div className="font-medium text-foreground">{contactAmb.regNumber}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Vehicle</div>
+                    <div className="font-medium text-foreground">{contactAmb.vehicleName || "—"}</div>
+                  </div>
+                  <div className="col-span-2">
+                    <div className="text-xs text-muted-foreground">Service Area</div>
+                    <div className="font-medium text-foreground">{contactAmb.district}, {contactAmb.division}</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Owner contact */}
+              <div className="rounded-lg border border-border p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                    <User className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Owner Contact</div>
+                    <div className="font-medium text-foreground">{contactAmb.contactNumber}</div>
+                  </div>
+                </div>
+                <Button asChild size="sm" className="gap-1.5">
+                  <a href={`tel:${contactAmb.contactNumber}`}>
+                    <Phone className="h-3.5 w-3.5" /> Call
+                  </a>
+                </Button>
+              </div>
+
+              {/* Driver contact */}
+              <div className="rounded-lg border border-border p-3 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Ambulance className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-xs text-muted-foreground">Driver — {contactAmb.driverName}</div>
+                    <div className="font-medium text-foreground">{contactAmb.driverContact || "—"}</div>
+                  </div>
+                </div>
+                <Button asChild size="sm" variant="outline" className="gap-1.5" disabled={!contactAmb.driverContact}>
+                  <a href={`tel:${contactAmb.driverContact}`}>
+                    <Phone className="h-3.5 w-3.5" /> Call
+                  </a>
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
