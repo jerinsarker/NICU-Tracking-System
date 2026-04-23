@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -37,6 +38,10 @@ import {
   AlertTriangle,
   BedDouble,
   Upload,
+  Send,
+  ArrowRight,
+  MapPin,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ListSearchBar, ListPagination, useListPagination } from "@/components/ListSearchPagination";
