@@ -41,7 +41,6 @@ import {
   Send,
   ArrowRight,
   MapPin,
-  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ListSearchBar, ListPagination, useListPagination } from "@/components/ListSearchPagination";
@@ -147,7 +146,6 @@ const Hospitals = () => {
   const [referFromHospital, setReferFromHospital] = useState<Hospital | null>(null);
   const [referDivision, setReferDivision] = useState<string>("all");
   const [referDistrict, setReferDistrict] = useState<string>("all");
-  const [referSearch, setReferSearch] = useState("");
   const [referConfirm, setReferConfirm] = useState<{ from: Hospital; to: Hospital } | null>(null);
 
   const availableBedsCount = (h: Hospital) => h.beds.filter((b) => b.status === "available").length;
@@ -156,7 +154,6 @@ const Hospitals = () => {
     setReferFromHospital(h);
     setReferDivision("all");
     setReferDistrict("all");
-    setReferSearch("");
   };
 
   // Eligible "To" hospitals: NICU enabled, has at least 1 available bed, and NOT the source hospital.
@@ -171,14 +168,12 @@ const Hospitals = () => {
   }, [hospitals, referFromHospital]);
 
   const filteredReferHospitals = useMemo(() => {
-    const q = referSearch.trim().toLowerCase();
     return referableHospitals.filter((h) => {
       if (referDivision !== "all" && h.division !== referDivision) return false;
       if (referDistrict !== "all" && h.district !== referDistrict) return false;
-      if (q && !h.name.toLowerCase().includes(q)) return false;
       return true;
     });
-  }, [referableHospitals, referDivision, referDistrict, referSearch]);
+  }, [referableHospitals, referDivision, referDistrict]);
 
   const confirmReferral = () => {
     if (!referConfirm) return;
