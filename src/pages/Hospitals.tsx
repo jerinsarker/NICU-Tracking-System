@@ -717,8 +717,8 @@ const Hospitals = () => {
             </div>
           )}
 
-          {/* Filters */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+          {/* Filters — Division & District only */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
             <div className="space-y-1.5">
               <Label className="text-xs">Division</Label>
               <Select
@@ -750,21 +750,9 @@ const Hospitals = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs">Search hospital</Label>
-              <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  className="pl-8"
-                  placeholder="Hospital name..."
-                  value={referSearch}
-                  onChange={(e) => setReferSearch(e.target.value)}
-                />
-              </div>
-            </div>
           </div>
 
-          {/* Destination hospital list */}
+          {/* Destination hospital list — shows hospital name + bed occupancy */}
           <div className="mt-4 space-y-2 max-h-[40vh] overflow-y-auto pr-1">
             {filteredReferHospitals.length === 0 && (
               <div className="text-center py-10 text-sm text-muted-foreground border rounded-lg border-dashed">
@@ -773,6 +761,8 @@ const Hospitals = () => {
             )}
             {filteredReferHospitals.map((h) => {
               const avail = availableBedsCount(h);
+              const total = h.beds.length;
+              const occupied = total - avail;
               return (
                 <div
                   key={h.id}
@@ -782,12 +772,15 @@ const Hospitals = () => {
                     <p className="font-semibold text-foreground truncate">{h.name}</p>
                     <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
                       <MapPin className="h-3 w-3" />
-                      {h.district}, {h.division} · {h.phone}
+                      {h.district}, {h.division}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3 shrink-0">
-                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 gap-1">
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge variant="secondary" className="gap-1 text-xs">
                       <BedDouble className="h-3 w-3" />
+                      {occupied}/{total} occupied
+                    </Badge>
+                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 gap-1">
                       {avail} available
                     </Badge>
                     <Button
