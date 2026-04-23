@@ -143,6 +143,52 @@ const Hospitals = () => {
   const [contactName, setContactName] = useState("");
   const [admPhone, setAdmPhone] = useState("+880");
 
+  // ---- Refer Patient flow (From hospital -> To hospital) ----
+  const [referFromHospital, setReferFromHospital] = useState<Hospital | null>(null);
+  const [referDivision, setReferDivision] = useState<string>("all");
+  const [referDistrict, setReferDistrict] = useState<string>("all");
+  const [referSearch, setReferSearch] = useState("");
+  const [referConfirm, setReferConfirm] = useState<{ from: Hospital; to: Hospital } | null>(null);
+
+  const availableBedsCount = (h: Hospital) => h.beds.filter((b) => b.status === "available").length;
+
+  const openReferModal = (h: Hospital) => {
+    setReferFromHospital(h);
+    setReferDivision("all");
+    setReferDistrict("all");
+    setReferSearch("");
+  };
+
+  // Eligible "To" hospitals: NICU enabled, has at least 1 available bed, and NOT the source hospital.
+  const referableHospitals = useMemo(() => {
+    if (!referFromHospital) return [];
+    return hospitals.filter(
+      (h) =>
+        h.id !== referFromHospital.id &&
+        h.nicuAvailable &&
+        availableBedsCount(h) > 0
+    );
+  }, [hospitals, referFromHospital]);
+
+  const filteredReferHospitals = useMemo(() => {
+    const q = referSearch.trim().toLowerCase();
+    return referableHospitals.filter((h) => {
+      if (referDivision !== "all" && h.division !== referDivision) return false;
+      if (referDistrict !== "all" && h.district !== referDistrict) return false;
+      if (q && !h.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [referableHospitals, referDivision, referDistrict, referSearch]);
+
+  const confirmReferral = () => {
+    if (!referConfirm) return;
+    toast.success(
+      `Patient referred from ${referConfirm.from.name} → ${referConfirm.to.name}`
+    );
+    setReferConfirm(null);
+    setReferFromHospital(null);
+  };
+
   const filterFn = (h: Hospital, q: string) => h.name.toLowerCase().includes(q);
 
   const { paginatedData, totalPages, safePage, startIndex, filtered } = useListPagination(
@@ -353,6 +399,16 @@ const Hospitals = () => {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
+                          {h.nicuAvailable && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+                              onClick={() => openReferModal(h)}
+                            >
+                              <Send className="h-3.5 w-3.5" /> Refer
+                            </Button>
+                          )}
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(h)}>
                             <Pencil className="h-4 w-4 text-primary" />
                           </Button>
