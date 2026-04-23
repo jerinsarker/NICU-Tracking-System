@@ -28,7 +28,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Ambulance, Plus, Pencil, Trash2, Upload, Phone, Search, Filter, X as XIcon, User, BadgeCheck } from "lucide-react";
+import { Ambulance, Plus, Pencil, Trash2, Upload, Phone, Filter, X as XIcon, User, BadgeCheck, ChevronDown, ChevronRight } from "lucide-react";
 import { toast } from "sonner";
 import { ListSearchBar, ListPagination, useListPagination } from "@/components/ListSearchPagination";
 
@@ -86,22 +86,23 @@ const Ambulances = () => {
   const [pageSize, setPageSize] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
 
-  // Advanced search filters (Super Admin)
+  // Advanced search filters (Super Admin) — simplified: division & district only
   const [filterDivision, setFilterDivision] = useState<string>("all");
   const [filterDistrict, setFilterDistrict] = useState<string>("all");
-  const [filterNicu, setFilterNicu] = useState<string>("all");
-  const [filterStatus, setFilterStatus] = useState<string>("all");
 
   // Contact info modal (after selecting an ambulance)
   const [contactAmb, setContactAmb] = useState<AmbulanceRecord | null>(null);
+
+  // Expanded owner groups
+  const [expandedOwners, setExpandedOwners] = useState<Record<string, boolean>>({});
+  const toggleOwner = (key: string) =>
+    setExpandedOwners((prev) => ({ ...prev, [key]: !prev[key] }));
 
   const filterDistrictOptions = filterDivision !== "all" ? divisionDistricts[filterDivision] || [] : [];
 
   const resetFilters = () => {
     setFilterDivision("all");
     setFilterDistrict("all");
-    setFilterNicu("all");
-    setFilterStatus("all");
     setSearchQuery("");
     setCurrentPage(1);
   };
@@ -109,15 +110,11 @@ const Ambulances = () => {
   const filterFn = (a: AmbulanceRecord, q: string) => {
     if (filterDivision !== "all" && a.division !== filterDivision) return false;
     if (filterDistrict !== "all" && a.district !== filterDistrict) return false;
-    if (filterNicu === "yes" && !a.nicuFacility) return false;
-    if (filterNicu === "no" && a.nicuFacility) return false;
-    if (filterStatus !== "all" && a.status !== filterStatus) return false;
     if (!q) return true;
+    // Search restricted to Owner/Agency name & Registration number
     return (
       a.ownerName.toLowerCase().includes(q) ||
-      a.contactNumber.toLowerCase().includes(q) ||
-      a.regNumber.toLowerCase().includes(q) ||
-      a.driverName.toLowerCase().includes(q)
+      a.regNumber.toLowerCase().includes(q)
     );
   };
 
@@ -125,11 +122,22 @@ const Ambulances = () => {
     ambulances, searchQuery, filterFn, pageSize, currentPage
   );
 
+  // Group filtered ambulances by Owner/Agency (one row per owner, expandable for vehicles)
+  const groupedByOwner = (() => {
+    const map = new Map<string, { ownerName: string; ownershipType: "individual" | "agency"; contactNumber: string; vehicles: AmbulanceRecord[] }>();
+    for (const a of paginatedData) {
+      const key = `${a.ownershipType}::${a.ownerName.toLowerCase()}`;
+      if (!map.has(key)) {
+        map.set(key, { ownerName: a.ownerName, ownershipType: a.ownershipType, contactNumber: a.contactNumber, vehicles: [] });
+      }
+      map.get(key)!.vehicles.push(a);
+    }
+    return Array.from(map.entries()).map(([key, v]) => ({ key, ...v }));
+  })();
+
   const activeFilterCount =
     (filterDivision !== "all" ? 1 : 0) +
-    (filterDistrict !== "all" ? 1 : 0) +
-    (filterNicu !== "all" ? 1 : 0) +
-    (filterStatus !== "all" ? 1 : 0);
+    (filterDistrict !== "all" ? 1 : 0);
 
   const openRegister = () => {
     setEditingAmb(null);
@@ -237,7 +245,7 @@ const Ambulances = () => {
               )}
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label className="text-xs text-muted-foreground">Division</Label>
                 <Select value={filterDivision} onValueChange={(v) => { setFilterDivision(v); setFilterDistrict("all"); setCurrentPage(1); }}>
@@ -262,38 +270,18 @@ const Ambulances = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">NICU Facility</Label>
-                <Select value={filterNicu} onValueChange={(v) => { setFilterNicu(v); setCurrentPage(1); }}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All</SelectItem>
-                    <SelectItem value="yes">NICU Equipped</SelectItem>
-                    <SelectItem value="no">No NICU</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">Status</Label>
-                <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="Active">Active</SelectItem>
-                    <SelectItem value="Inactive">Inactive</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
             <ListSearchBar
               searchQuery={searchQuery}
               onSearchChange={(q) => { setSearchQuery(q); setCurrentPage(1); }}
-              searchPlaceholder="Search by owner/agency, driver, contact or reg number..."
+              searchPlaceholder="Search by Owner / Agency name or Reg. number..."
             />
 
             <div className="text-xs text-muted-foreground">
               Showing <span className="font-semibold text-foreground">{filtered.length}</span> of {ambulances.length} ambulances
+              {" · "}
+              <span className="font-semibold text-foreground">{groupedByOwner.length}</span> owner{groupedByOwner.length === 1 ? "" : "s"}
             </div>
           </div>
           <div className="rounded-lg border border-border overflow-hidden">
@@ -301,52 +289,70 @@ const Ambulances = () => {
               <table className="w-full text-sm">
                 <thead className="bg-muted">
                   <tr>
+                    <th className="text-left px-2 py-3 font-semibold text-foreground w-10"></th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground w-12">SN.</th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">Owner/Agency</th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">Reg. Number</th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">Driver</th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">Vehicle</th>
-                    <th className="text-center px-4 py-3 font-semibold text-foreground">NICU</th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">Area</th>
-                    <th className="text-center px-4 py-3 font-semibold text-foreground">Status</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Owner / Agency</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Type</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Contact</th>
+                    <th className="text-center px-4 py-3 font-semibold text-foreground">Vehicles</th>
                     <th className="text-center px-4 py-3 font-semibold text-foreground">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {paginatedData.map((a, idx) => (
-                    <tr key={a.id} className="border-t border-border hover:bg-muted/40 transition-colors">
-                      <td className="px-4 py-3 text-muted-foreground">{startIndex + idx + 1}</td>
-                      <td className="px-4 py-3 font-medium text-foreground">{a.ownerName}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{a.regNumber}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{a.driverName}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{a.vehicleName}</td>
-                      <td className="px-4 py-3 text-center">
-                        <Badge variant={a.nicuFacility ? "default" : "secondary"} className="text-xs">
-                          {a.nicuFacility ? "Yes" : "No"}
-                        </Badge>
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground text-xs">{a.district}, {a.division}</td>
-                      <td className="px-4 py-3 text-center">
-                        <Badge variant={a.status === "Active" ? "default" : "secondary"} className="text-xs">{a.status}</Badge>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => setContactAmb(a)}>
-                            <Phone className="h-3.5 w-3.5 text-primary" /> Contact
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(a)}>
-                            <Pencil className="h-4 w-4 text-primary" />
-                          </Button>
-                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDeleteAmbId(a.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                  {paginatedData.length === 0 && (
+                  {groupedByOwner.map((g, idx) => {
+                    const isOpen = !!expandedOwners[g.key];
+                    return (
+                      <>
+                        <tr key={g.key} className="border-t border-border hover:bg-muted/40 transition-colors">
+                          <td className="px-2 py-3">
+                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => toggleOwner(g.key)}>
+                              {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                            </Button>
+                          </td>
+                          <td className="px-4 py-3 text-muted-foreground">{startIndex + idx + 1}</td>
+                          <td className="px-4 py-3 font-medium text-foreground">{g.ownerName}</td>
+                          <td className="px-4 py-3 text-muted-foreground capitalize">{g.ownershipType}</td>
+                          <td className="px-4 py-3 text-muted-foreground">{g.contactNumber}</td>
+                          <td className="px-4 py-3 text-center">
+                            <Badge variant="secondary" className="text-xs">{g.vehicles.length} ambulance{g.vehicles.length === 1 ? "" : "s"}</Badge>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => setContactAmb(g.vehicles[0])}>
+                              <Phone className="h-3.5 w-3.5 text-primary" /> Contact
+                            </Button>
+                          </td>
+                        </tr>
+                        {isOpen && g.vehicles.map((a) => (
+                          <tr key={a.id} className="border-t border-border bg-muted/20">
+                            <td></td>
+                            <td colSpan={6} className="px-4 py-3">
+                              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
+                                <div><span className="text-muted-foreground">Reg:</span> <span className="font-medium text-foreground">{a.regNumber}</span></div>
+                                <div><span className="text-muted-foreground">Vehicle:</span> <span className="font-medium text-foreground">{a.vehicleName || "—"}</span></div>
+                                <div><span className="text-muted-foreground">Driver:</span> <span className="font-medium text-foreground">{a.driverName}</span> ({a.driverContact || "—"})</div>
+                                <div><span className="text-muted-foreground">Area:</span> <span className="font-medium text-foreground">{a.district}, {a.division}</span></div>
+                                <Badge variant={a.status === "Active" ? "default" : "secondary"} className="text-[10px]">{a.status}</Badge>
+                                <div className="ml-auto flex items-center gap-1">
+                                  <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={() => setContactAmb(a)}>
+                                    <Phone className="h-3 w-3 text-primary" /> Contact
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(a)}>
+                                    <Pencil className="h-3.5 w-3.5 text-primary" />
+                                  </Button>
+                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDeleteAmbId(a.id)}>
+                                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
+                                  </Button>
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </>
+                    );
+                  })}
+                  {groupedByOwner.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="px-4 py-8 text-center text-muted-foreground">
+                      <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
                         {(searchQuery || activeFilterCount > 0) ? "No ambulances match your filters. Try adjusting or clearing them." : "No ambulances registered yet."}
                       </td>
                     </tr>

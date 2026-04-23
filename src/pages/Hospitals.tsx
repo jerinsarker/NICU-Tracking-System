@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -37,6 +38,10 @@ import {
   AlertTriangle,
   BedDouble,
   Upload,
+  Send,
+  ArrowRight,
+  MapPin,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { ListSearchBar, ListPagination, useListPagination } from "@/components/ListSearchPagination";
@@ -137,6 +142,52 @@ const Hospitals = () => {
   const [relation, setRelation] = useState("");
   const [contactName, setContactName] = useState("");
   const [admPhone, setAdmPhone] = useState("+880");
+
+  // ---- Refer Patient flow (From hospital -> To hospital) ----
+  const [referFromHospital, setReferFromHospital] = useState<Hospital | null>(null);
+  const [referDivision, setReferDivision] = useState<string>("all");
+  const [referDistrict, setReferDistrict] = useState<string>("all");
+  const [referSearch, setReferSearch] = useState("");
+  const [referConfirm, setReferConfirm] = useState<{ from: Hospital; to: Hospital } | null>(null);
+
+  const availableBedsCount = (h: Hospital) => h.beds.filter((b) => b.status === "available").length;
+
+  const openReferModal = (h: Hospital) => {
+    setReferFromHospital(h);
+    setReferDivision("all");
+    setReferDistrict("all");
+    setReferSearch("");
+  };
+
+  // Eligible "To" hospitals: NICU enabled, has at least 1 available bed, and NOT the source hospital.
+  const referableHospitals = useMemo(() => {
+    if (!referFromHospital) return [];
+    return hospitals.filter(
+      (h) =>
+        h.id !== referFromHospital.id &&
+        h.nicuAvailable &&
+        availableBedsCount(h) > 0
+    );
+  }, [hospitals, referFromHospital]);
+
+  const filteredReferHospitals = useMemo(() => {
+    const q = referSearch.trim().toLowerCase();
+    return referableHospitals.filter((h) => {
+      if (referDivision !== "all" && h.division !== referDivision) return false;
+      if (referDistrict !== "all" && h.district !== referDistrict) return false;
+      if (q && !h.name.toLowerCase().includes(q)) return false;
+      return true;
+    });
+  }, [referableHospitals, referDivision, referDistrict, referSearch]);
+
+  const confirmReferral = () => {
+    if (!referConfirm) return;
+    toast.success(
+      `Patient referred from ${referConfirm.from.name} → ${referConfirm.to.name}`
+    );
+    setReferConfirm(null);
+    setReferFromHospital(null);
+  };
 
   const filterFn = (h: Hospital, q: string) => h.name.toLowerCase().includes(q);
 
@@ -348,6 +399,16 @@ const Hospitals = () => {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <div className="flex items-center justify-center gap-1">
+                          {h.nicuAvailable && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1.5 border-primary/30 text-primary hover:bg-primary/10"
+                              onClick={() => openReferModal(h)}
+                            >
+                              <Send className="h-3.5 w-3.5" /> Refer
+                            </Button>
+                          )}
                           <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(h)}>
                             <Pencil className="h-4 w-4 text-primary" />
                           </Button>
@@ -625,6 +686,158 @@ const Hospitals = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Refer Patient Modal — From hospital → To hospital */}
+      <Dialog open={!!referFromHospital} onOpenChange={(open) => !open && setReferFromHospital(null)}>
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-lg flex items-center gap-2">
+              <Send className="h-5 w-5 text-primary" /> Refer Patient
+            </DialogTitle>
+            <DialogDescription>
+              Select a destination hospital with available NICU beds. The transfer details (From → To) will be confirmed before submission.
+            </DialogDescription>
+          </DialogHeader>
+
+          {/* From → To header banner */}
+          {referFromHospital && (
+            <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] items-center gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+              <div className="space-y-0.5">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">From Hospital</div>
+                <div className="font-semibold text-foreground">{referFromHospital.name}</div>
+                <div className="text-xs text-muted-foreground flex items-center gap-1">
+                  <MapPin className="h-3 w-3" /> {referFromHospital.district}, {referFromHospital.division}
+                </div>
+              </div>
+              <ArrowRight className="h-5 w-5 text-primary mx-auto hidden md:block" />
+              <div className="space-y-0.5 md:text-right">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">To Hospital</div>
+                <div className="text-sm text-muted-foreground italic">Select from list below…</div>
+              </div>
+            </div>
+          )}
+
+          {/* Filters */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">Division</Label>
+              <Select
+                value={referDivision}
+                onValueChange={(v) => { setReferDivision(v); setReferDistrict("all"); }}
+              >
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All divisions</SelectItem>
+                  {Object.keys(divisionDistricts).map((d) => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">District</Label>
+              <Select
+                value={referDistrict}
+                onValueChange={setReferDistrict}
+                disabled={referDivision === "all"}
+              >
+                <SelectTrigger><SelectValue placeholder="All districts" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All districts</SelectItem>
+                  {(divisionDistricts[referDivision] || []).map((d) => (
+                    <SelectItem key={d} value={d}>{d}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Search hospital</Label>
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  className="pl-8"
+                  placeholder="Hospital name..."
+                  value={referSearch}
+                  onChange={(e) => setReferSearch(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Destination hospital list */}
+          <div className="mt-4 space-y-2 max-h-[40vh] overflow-y-auto pr-1">
+            {filteredReferHospitals.length === 0 && (
+              <div className="text-center py-10 text-sm text-muted-foreground border rounded-lg border-dashed">
+                No hospital with available NICU beds matches your filters.
+              </div>
+            )}
+            {filteredReferHospitals.map((h) => {
+              const avail = availableBedsCount(h);
+              return (
+                <div
+                  key={h.id}
+                  className="flex items-center justify-between gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-colors"
+                >
+                  <div className="min-w-0">
+                    <p className="font-semibold text-foreground truncate">{h.name}</p>
+                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                      <MapPin className="h-3 w-3" />
+                      {h.district}, {h.division} · {h.phone}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 gap-1">
+                      <BedDouble className="h-3 w-3" />
+                      {avail} available
+                    </Badge>
+                    <Button
+                      size="sm"
+                      className="gap-1.5"
+                      onClick={() => referFromHospital && setReferConfirm({ from: referFromHospital, to: h })}
+                    >
+                      <Send className="h-3.5 w-3.5" /> Refer Here
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Refer confirmation — clearly shows From → To */}
+      <AlertDialog open={!!referConfirm} onOpenChange={(open) => !open && setReferConfirm(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirm Patient Referral</AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <div>Please confirm the following hospital transfer:</div>
+                {referConfirm && (
+                  <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-3 p-3 rounded-lg bg-muted border border-border">
+                    <div className="space-y-0.5">
+                      <div className="text-[10px] uppercase tracking-wider font-semibold">From</div>
+                      <div className="font-semibold text-foreground">{referConfirm.from.name}</div>
+                      <div className="text-xs">{referConfirm.from.district}, {referConfirm.from.division}</div>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-primary mx-auto hidden sm:block" />
+                    <div className="space-y-0.5 sm:text-right">
+                      <div className="text-[10px] uppercase tracking-wider font-semibold">To</div>
+                      <div className="font-semibold text-foreground">{referConfirm.to.name}</div>
+                      <div className="text-xs">{referConfirm.to.district}, {referConfirm.to.division}</div>
+                    </div>
+                  </div>
+                )}
+                <div className="text-xs">The destination hospital will be notified and a NICU bed will be reserved.</div>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmReferral}>Confirm Refer</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

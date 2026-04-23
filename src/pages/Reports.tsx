@@ -17,16 +17,18 @@ import {
 
 const donutData = [
   { name: "Occupied", value: 898, color: "hsl(199, 89%, 38%)" },
-  { name: "Vacant", value: 342, color: "hsl(174, 42%, 51%)" },
+  { name: "Available", value: 342, color: "hsl(174, 42%, 51%)" },
 ];
 
 const barData = [
-  { district: "Dhaka", beds: 320 },
-  { district: "Gazipur", beds: 180 },
-  { district: "Tangail", beds: 120 },
-  { district: "Mymensingh", beds: 210 },
-  { district: "Narsingdi", beds: 95 },
-  { district: "Manikganj", beds: 75 },
+  { division: "Dhaka", beds: 520 },
+  { division: "Chattogram", beds: 410 },
+  { division: "Rajshahi", beds: 280 },
+  { division: "Khulna", beds: 240 },
+  { division: "Barishal", beds: 150 },
+  { division: "Sylhet", beds: 200 },
+  { division: "Rangpur", beds: 220 },
+  { division: "Mymensingh", beds: 180 },
 ];
 
 const hospitalReportData = [
@@ -61,7 +63,7 @@ const Reports = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Occupied vs Vacant NICU Beds</CardTitle>
+            <CardTitle className="text-base">Occupied vs Available NICU Beds</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
@@ -88,13 +90,13 @@ const Reports = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">NICU Beds by District</CardTitle>
+            <CardTitle className="text-base">NICU Beds by Division</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={280}>
               <BarChart data={barData}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(210, 18%, 90%)" />
-                <XAxis dataKey="district" tick={{ fontSize: 12 }} />
+                <XAxis dataKey="division" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
                 <Tooltip />
                 <Bar dataKey="beds" fill="hsl(199, 89%, 38%)" radius={[4, 4, 0, 0]} />
