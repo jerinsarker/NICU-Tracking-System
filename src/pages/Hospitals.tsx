@@ -780,7 +780,7 @@ const Hospitals = () => {
                       <BedDouble className="h-3 w-3" />
                       {occupied}/{total} occupied
                     </Badge>
-                    <Badge className="bg-emerald-100 text-emerald-800 border border-emerald-300 gap-1">
+                    <Badge className="gap-1 bg-success/15 text-success border border-success/30 hover:bg-success/15">
                       {avail} available
                     </Badge>
                     <Button
