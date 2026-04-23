@@ -289,70 +289,40 @@ const Ambulances = () => {
               <table className="w-full text-sm">
                 <thead className="bg-muted">
                   <tr>
-                    <th className="text-left px-2 py-3 font-semibold text-foreground w-10"></th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground w-12">SN.</th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Owner / Agency</th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Type</th>
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">Reg. Number</th>
                     <th className="text-left px-4 py-3 font-semibold text-foreground">Contact</th>
-                    <th className="text-center px-4 py-3 font-semibold text-foreground">Vehicles</th>
                     <th className="text-center px-4 py-3 font-semibold text-foreground">Action</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {groupedByOwner.map((g, idx) => {
-                    const isOpen = !!expandedOwners[g.key];
-                    return (
-                      <>
-                        <tr key={g.key} className="border-t border-border hover:bg-muted/40 transition-colors">
-                          <td className="px-2 py-3">
-                            <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => toggleOwner(g.key)}>
-                              {isOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                            </Button>
-                          </td>
-                          <td className="px-4 py-3 text-muted-foreground">{startIndex + idx + 1}</td>
-                          <td className="px-4 py-3 font-medium text-foreground">{g.ownerName}</td>
-                          <td className="px-4 py-3 text-muted-foreground capitalize">{g.ownershipType}</td>
-                          <td className="px-4 py-3 text-muted-foreground">{g.contactNumber}</td>
-                          <td className="px-4 py-3 text-center">
-                            <Badge variant="secondary" className="text-xs">{g.vehicles.length} ambulance{g.vehicles.length === 1 ? "" : "s"}</Badge>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => setContactAmb(g.vehicles[0])}>
-                              <Phone className="h-3.5 w-3.5 text-primary" /> Contact
-                            </Button>
-                          </td>
-                        </tr>
-                        {isOpen && g.vehicles.map((a) => (
-                          <tr key={a.id} className="border-t border-border bg-muted/20">
-                            <td></td>
-                            <td colSpan={6} className="px-4 py-3">
-                              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs">
-                                <div><span className="text-muted-foreground">Reg:</span> <span className="font-medium text-foreground">{a.regNumber}</span></div>
-                                <div><span className="text-muted-foreground">Vehicle:</span> <span className="font-medium text-foreground">{a.vehicleName || "—"}</span></div>
-                                <div><span className="text-muted-foreground">Driver:</span> <span className="font-medium text-foreground">{a.driverName}</span> ({a.driverContact || "—"})</div>
-                                <div><span className="text-muted-foreground">Area:</span> <span className="font-medium text-foreground">{a.district}, {a.division}</span></div>
-                                <Badge variant={a.status === "Active" ? "default" : "secondary"} className="text-[10px]">{a.status}</Badge>
-                                <div className="ml-auto flex items-center gap-1">
-                                  <Button size="sm" variant="ghost" className="h-7 gap-1 text-xs" onClick={() => setContactAmb(a)}>
-                                    <Phone className="h-3 w-3 text-primary" /> Contact
-                                  </Button>
-                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => openEdit(a)}>
-                                    <Pencil className="h-3.5 w-3.5 text-primary" />
-                                  </Button>
-                                  <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setDeleteAmbId(a.id)}>
-                                    <Trash2 className="h-3.5 w-3.5 text-destructive" />
-                                  </Button>
-                                </div>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </>
-                    );
-                  })}
-                  {groupedByOwner.length === 0 && (
+                  {paginatedData.map((a, idx) => (
+                    <tr key={a.id} className="border-t border-border hover:bg-muted/40 transition-colors">
+                      <td className="px-4 py-3 text-muted-foreground">{startIndex + idx + 1}</td>
+                      <td className="px-4 py-3 font-medium text-foreground">{a.ownerName}</td>
+                      <td className="px-4 py-3 text-muted-foreground capitalize">{a.ownershipType}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{a.regNumber}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{a.contactNumber}</td>
+                      <td className="px-4 py-3 text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button size="sm" variant="outline" className="h-8 gap-1.5 text-xs" onClick={() => setContactAmb(a)}>
+                            <Phone className="h-3.5 w-3.5 text-primary" /> Contact
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => openEdit(a)}>
+                            <Pencil className="h-4 w-4 text-primary" />
+                          </Button>
+                          <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => setDeleteAmbId(a.id)}>
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {paginatedData.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
+                      <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
                         {(searchQuery || activeFilterCount > 0) ? "No ambulances match your filters. Try adjusting or clearing them." : "No ambulances registered yet."}
                       </td>
                     </tr>
